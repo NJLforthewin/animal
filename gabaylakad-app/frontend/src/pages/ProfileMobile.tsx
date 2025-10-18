@@ -21,6 +21,7 @@ interface ProfileMobileProps {
   setShowAvatarPicker: (show: boolean) => void;
   onUpdate: (e: React.FormEvent, closeModal?: () => void) => Promise<void>;
   originalAvatar: string | null;
+  fetchProfile: () => Promise<void>; // <-- add this
 }
 
 
@@ -38,7 +39,8 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
   setAvatarPreview,
   setShowAvatarPicker,
   onUpdate,
-  originalAvatar
+  originalAvatar,
+  fetchProfile
 }) => {
   // Modal state
   const [showPatientModal, setShowPatientModal] = useState(false);

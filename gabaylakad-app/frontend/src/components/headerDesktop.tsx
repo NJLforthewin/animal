@@ -156,7 +156,17 @@ const HeaderDesktop: React.FC<HeaderDesktopProps> = ({ user }) => {
                         className="desktop-profile-menu-link"
                         aria-label={tab.label}
                         style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(41,128,185,0.08)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#232946', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s', marginBottom: 6 }}
-                        onClick={() => { setUserMenuOpen(false); navigate(`/${tab.key}`); }}
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          if (tab.key === 'profile') {
+                            // Open global ProfileDesktop modal overlay
+                            if (window && window.dispatchEvent) {
+                              window.dispatchEvent(new CustomEvent('openProfileDesktopModal'));
+                            }
+                          } else {
+                            navigate(`/${tab.key}`);
+                          }
+                        }}
                       >
                         <i className={tab.icon} aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#2980b9' }}></i>
                         <span>{tab.label}</span>

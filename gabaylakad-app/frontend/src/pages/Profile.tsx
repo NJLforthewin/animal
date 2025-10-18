@@ -40,7 +40,10 @@ export interface UserType {
   device_id?: string;
 }
 
-export const UserContext = createContext<{ user: UserType | null; setUser: (u: UserType | null) => void }>({ user: null, setUser: () => {} });
+export const UserContext = createContext<{
+  user: UserType | null;
+  setUser: (u: UserType | null) => void;
+}>({ user: null, setUser: () => {} });
 
 const Profile: React.FC = () => {
   const isMobile = useIsMobile();
@@ -52,17 +55,15 @@ const Profile: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  // Store the original avatar for cancel logic
   const [originalAvatar, setOriginalAvatar] = useState<string | null>(null);
-  // Local preview for mobile profile panel only
   const [localMobileAvatarPreview, setLocalMobileAvatarPreview] = useState<string | null>(null);
   const { setUser } = useContext(UserContext);
 
-  useEffect(() => {
-    // Fetch profile data on mount
-    async function fetchProfile() {
+  // ✅ Move fetchProfile outside of useEffect so it’s reusable
+  async function fetchProfile() {
+    try {
       const res = await fetch('/api/profile', {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
       });
       const data = await res.json();
       setProfile(data);
@@ -73,119 +74,119 @@ const Profile: React.FC = () => {
         email: data.email,
         phone: data.phone_number,
       });
+    } catch (err) {
+      console.error('Failed to fetch profile:', err);
     }
+  }
+
+  // Fetch profile on mount
+  useEffect(() => {
     fetchProfile();
   }, []);
 
   return (
     <UserContext.Provider value={{ user: profile, setUser: setProfile }}>
       <div className="profile-page">
-  {/* Left panel (desktop header) separated */}
-  {!isMobile && <ProfileLeftPanel user={profile} />}
-      {/* Right panel (main profile logic) separated */}
-      <ProfileRightPanel
-        isMobile={isMobile}
-        profile={profile}
-        editMode={editMode}
-        form={form}
-        mobileForm={mobileForm}
-        loading={loading}
-        errorMsg={errorMsg}
-        avatarPreview={avatarPreview}
-        showAvatarPicker={showAvatarPicker}
-        defaultAvatars={defaultAvatars}
-        setEditMode={(edit) => {
-          setEditMode(edit);
-          if (edit) {
-            setOriginalAvatar(avatarPreview || profile?.avatar || null);
-            if (isMobile) {
-              setLocalMobileAvatarPreview(avatarPreview || profile?.avatar || null);
+        {/* Left panel (desktop header) */}
+        {!isMobile && <ProfileLeftPanel user={profile} />}
+
+        {/* Right panel (main profile logic) */}
+        <ProfileRightPanel
+          isMobile={isMobile}
+          profile={profile}
+          editMode={editMode}
+          form={form}
+          mobileForm={mobileForm}
+          loading={loading}
+          errorMsg={errorMsg}
+          avatarPreview={avatarPreview}
+          showAvatarPicker={showAvatarPicker}
+          defaultAvatars={defaultAvatars}
+          setEditMode={setEditMode}
+          setForm={setForm}
+          setMobileForm={setMobileForm}
+          setAvatarPreview={isMobile ? setLocalMobileAvatarPreview : setAvatarPreview}
+          setShowAvatarPicker={setShowAvatarPicker}
+          onSave={async () => {
+            setLoading(true);
+            setErrorMsg('');
+            try {
+              const avatarToSend = avatarPreview || originalAvatar || profile?.avatar;
+              await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                },
+                body: JSON.stringify({
+                  ...form,
+                  avatar: avatarToSend,
+                }),
+              });
+
+              // Re-fetch updated profile
+              await fetchProfile();
+              setUser(profile); // Update global context
+              setAvatarPreview(avatarPreview || originalAvatar || profile?.avatar || '');
+              setEditMode(false);
+              setOriginalAvatar(null);
+            } catch (err) {
+              console.error(err);
+              setErrorMsg('Could not save changes.');
             }
-          } else {
-            setAvatarPreview(originalAvatar || '');
-            if (isMobile) {
+            setLoading(false);
+          }}
+          onUpdate={async (e: React.FormEvent, closeModal?: () => void) => {
+            e.preventDefault();
+            setLoading(true);
+            setErrorMsg('');
+            try {
+              const avatarToSendMobile =
+                localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar;
+
+              await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                },
+                body: JSON.stringify({
+                  first_name: mobileForm.first_name || '',
+                  last_name: mobileForm.last_name || '',
+                  email: mobileForm.email || '',
+                  phone_number: mobileForm.phone || '',
+                  relationship: profile?.relationship || '',
+                  blind_full_name: profile?.blind_full_name || '',
+                  blind_phone_number: profile?.blind_phone_number || '',
+                  blind_age: profile?.blind_age || '',
+                  impairment_level: profile?.impairment_level || '',
+                  device_id: profile?.device_id || '',
+                  avatar: avatarToSendMobile,
+                }),
+              });
+
+              // Re-fetch updated profile
+              await fetchProfile();
+              setUser(profile); // Update global context
+              setAvatarPreview(localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar || '');
+              setEditMode(false);
               setLocalMobileAvatarPreview(null);
+              setOriginalAvatar(null);
+              if (closeModal) closeModal();
+            } catch (err) {
+              console.error(err);
+              setErrorMsg('Could not save changes.');
             }
-            setOriginalAvatar(null);
-          }
-        }}
-        setForm={setForm}
-        setMobileForm={setMobileForm}
-  setAvatarPreview={isMobile ? setLocalMobileAvatarPreview : setAvatarPreview}
-        setShowAvatarPicker={setShowAvatarPicker}
-        onSave={async () => {
-          setLoading(true); setErrorMsg('');
-          try {
-            const avatarToSend = avatarPreview || originalAvatar || profile?.avatar;
-            await fetch('/api/profile', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem('token')}` },
-              body: JSON.stringify({
-                ...form,
-                avatar: avatarToSend
-              }),
-            });
-            const fetchRes = await fetch('/api/profile', {
-              headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
-            });
-            const updated = await fetchRes.json();
-            setProfile(updated);
-            setUser(updated); // <-- update global context
-            setAvatarPreview(avatarPreview || originalAvatar || profile?.avatar || '');
-            setEditMode(false);
-            setOriginalAvatar(null);
-          } catch (err) {
-            setErrorMsg('Could not save changes.');
-          }
-          setLoading(false);
-        }}
-        onUpdate={async (e: React.FormEvent, closeModal?: () => void) => {
-          e.preventDefault();
-          setLoading(true); setErrorMsg('');
-          try {
-            const avatarToSendMobile = localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar;
-            await fetch('/api/profile', {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionStorage.getItem('token')}` },
-              body: JSON.stringify({
-                first_name: mobileForm.first_name || '',
-                last_name: mobileForm.last_name || '',
-                email: mobileForm.email || '',
-                phone_number: mobileForm.phone || '',
-                relationship: profile?.relationship || '',
-                blind_full_name: profile?.blind_full_name || '',
-                blind_phone_number: profile?.blind_phone_number || '',
-                blind_age: profile?.blind_age || '',
-                impairment_level: profile?.impairment_level || '',
-                device_id: profile?.device_id || '',
-                avatar: avatarToSendMobile
-              }),
-            });
-            const fetchRes = await fetch('/api/profile', {
-              headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
-            });
-            const updated = await fetchRes.json();
-            setProfile(updated);
-            setUser(updated); // <-- update global context
-            setAvatarPreview(localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar || '');
-            setEditMode(false);
-            setLocalMobileAvatarPreview(null);
-            setOriginalAvatar(null);
-            if (closeModal) closeModal();
-          } catch (err) {
-            setErrorMsg('Could not save changes.');
-          }
-          setLoading(false);
-        }}
-        originalAvatar={originalAvatar}
-  localProfileAvatarPreview={avatarPreview}
-  setLocalProfileAvatarPreview={setAvatarPreview}
-        localMobileAvatarPreview={localMobileAvatarPreview}
-        setLocalMobileAvatarPreview={setLocalMobileAvatarPreview}
-      />
-  {/* removed duplicate/broken legacy code */}
-      
-    </div>
+            setLoading(false);
+          }}
+          originalAvatar={originalAvatar}
+          localProfileAvatarPreview={avatarPreview}
+          setLocalProfileAvatarPreview={setAvatarPreview}
+          localMobileAvatarPreview={localMobileAvatarPreview}
+          setLocalMobileAvatarPreview={setLocalMobileAvatarPreview}
+          fetchProfile={fetchProfile}
+        />
+      </div>
     </UserContext.Provider>
   );
 };

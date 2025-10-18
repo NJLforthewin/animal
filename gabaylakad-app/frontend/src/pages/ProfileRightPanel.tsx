@@ -26,6 +26,7 @@ interface ProfileRightPanelProps {
   setLocalProfileAvatarPreview: (avatar: string | null) => void;
   localMobileAvatarPreview: string | null;
   setLocalMobileAvatarPreview: (avatar: string | null) => void;
+  fetchProfile: () => Promise<void>; // <-- add this
 }
 
 const ProfileRightPanel: React.FC<ProfileRightPanelProps> = ({
@@ -51,6 +52,7 @@ const ProfileRightPanel: React.FC<ProfileRightPanelProps> = ({
   setLocalProfileAvatarPreview,
   localMobileAvatarPreview,
   setLocalMobileAvatarPreview,
+  fetchProfile, // <-- forward
 }) => {
   return (
     <div className="profile-right-panel">
@@ -86,6 +88,7 @@ const ProfileRightPanel: React.FC<ProfileRightPanelProps> = ({
           setAvatarPreview={setAvatarPreview}
           setShowAvatarPicker={setShowAvatarPicker}
           onSave={onSave}
+          fetchProfile={fetchProfile} // <-- forward
         />
       ) : (
         <ProfileMobile
@@ -103,6 +106,7 @@ const ProfileRightPanel: React.FC<ProfileRightPanelProps> = ({
           setShowAvatarPicker={setShowAvatarPicker}
           onUpdate={onUpdate}
           originalAvatar={originalAvatar}
+          fetchProfile={fetchProfile} // <-- forward
         />
       )}
     </div>
