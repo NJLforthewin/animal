@@ -1,0 +1,41 @@
+.dashboard-card {
+  border-radius: 18px;
+  box-shadow:
+    0 0 10px rgba(95, 111, 255, 0.6),
+    0 20px 30px rgba(155, 89, 182, 0.4);
+  padding: 1.7rem 1.2rem;
+  min-width: 260px;
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  margin-right: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .dashboard-card {
+    min-width: 0;
+    max-width: 95vw;
+    width: 100%;
+    margin: 0 auto 12px auto !important;
+    border-radius: 18px;
+    padding: 1.3rem 1rem;
+    overflow: visible;
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(44,62,80,0.10);
+    border: none !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .dashboard-card {
+    max-width: 98vw;
+    width: 100%;
+    padding: 0.8rem 0.4rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+  }
+}

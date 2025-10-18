@@ -1,0 +1,167 @@
+@media (max-width: 600px) {
+  .profile-mobile-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .profile-mobile-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    border-top-left-radius: 1.2rem;
+    border-top-right-radius: 1.2rem;
+    background: var(--accent-color, #2980b9);
+    z-index: 1;
+  }
+  .accent-blue .profile-mobile-card-accent { --accent-color: #2980b9; }
+  .accent-green .profile-mobile-card-accent { --accent-color: #27ae60; }
+  .accent-purple .profile-mobile-card-accent { --accent-color: #8e44ad; }
+  .profile-mobile-card-header {
+    position: relative;
+    z-index: 2;
+    margin-top: 0;
+  }
+  .profile-mobile-card-title {
+    color: var(--accent-color, #2980b9);
+  }
+  .profile-mobile-field input {
+    font-weight: 600;
+    color: var(--accent-color, #2980b9);
+  }
+  .profile-mobile-action-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    box-shadow: 0 -2px 12px rgba(44,62,80,0.10);
+    padding: 1rem 1.2rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    z-index: 100;
+  }
+  .profile-mobile-edit-btn, .profile-mobile-save-btn, .profile-mobile-cancel-btn {
+    background: #2980b9;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+    transition: background 0.18s;
+  }
+  .profile-mobile-save-btn {
+    background: #27ae60;
+  }
+  .profile-mobile-cancel-btn {
+    background: #e0e6ed;
+    color: #232946;
+  }
+}
+/* profile-mobile.css: Responsive styles for mobile profile page */
+
+@media (max-width: 600px) {
+  .profile-page {
+    padding: 0;
+    background: linear-gradient(135deg, #e3f0ff 0%, #b6cfff 100%);
+    overflow: hidden;
+  }
+  main {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+  .profile-mobile-wrapper {
+    margin: 0;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .profile-mobile-card {
+    background: #fff;
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.10);
+    padding: 1.2rem 1.2rem 1.5rem 1.2rem;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .profile-mobile-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 1.1rem;
+  }
+  .profile-mobile-card-icon {
+    font-size: 1.3rem;
+    color: #2980b9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    background: #e3f0ff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+  }
+  .profile-mobile-card-title {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #232946;
+    letter-spacing: 0.02em;
+  }
+  .profile-mobile-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+  .profile-mobile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    position: relative;
+  }
+  .profile-mobile-field label {
+    font-size: 0.98rem;
+    font-weight: 500;
+    color: #7f8c8d;
+    margin-bottom: 0.1rem;
+    display: block;
+  }
+  .profile-mobile-field input {
+    font-size: 1.08rem;
+    background: #f6f8fa;
+    border-radius: 0.7rem;
+    padding: 0.7rem 1rem;
+    border: 1px solid #e0e6ed;
+    color: #232946;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    display: block;
+    margin-bottom: 0.1rem;
+    transition: box-shadow 0.18s;
+  }
+  .profile-mobile-field input:focus {
+    box-shadow: 0 0 0 2px #2980b944;
+    outline: none;
+  }
+  .profile-mobile-field input:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  /* Divider between fields */
+  .profile-mobile-field:not(:last-child)::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: #e0e6ed;
+    margin: 0.3rem 0 0.1rem 0;
+    width: 100%;
+  }
+}
