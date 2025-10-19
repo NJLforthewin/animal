@@ -1,22 +1,13 @@
-import React, { useEffect, useState, createContext, useContext } from 'react';
+import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/dashboard-main.css';
 import '../styles/profile.css';
 import '../styles/profile-mobile.css';
 import '../styles/profile-feed-mobile.css';
 import ProfileLeftPanel from './ProfileLeftPanel';
-import ProfileRightPanel from './ProfileRightPanel';
-import PreferencesSection from '../components/PreferencesSection';
+import ProfileMobile from './ProfileMobile';
 
-// Custom hook to detect mobile viewport
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 430);
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 430);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  return isMobile;
-}
+import useIsMobile from '../components/useIsMobile';
 
 const defaultAvatars: string[] = [
   '/avatars/avatar1.png',
@@ -49,7 +40,6 @@ const Profile: React.FC = () => {
   const isMobile = useIsMobile();
   const [profile, setProfile] = useState<UserType | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState<any>({});
   const [mobileForm, setMobileForm] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -58,16 +48,18 @@ const Profile: React.FC = () => {
   const [originalAvatar, setOriginalAvatar] = useState<string | null>(null);
   const [localMobileAvatarPreview, setLocalMobileAvatarPreview] = useState<string | null>(null);
   const { setUser } = useContext(UserContext);
+  const fadeRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // ✅ Move fetchProfile outside of useEffect so it’s reusable
+  // Shared fetchProfile
   async function fetchProfile() {
     try {
       const res = await fetch('/api/profile', {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
       });
       const data = await res.json();
-      setProfile(data);
-      setForm(data);
+  setProfile(data);
       setMobileForm({
         first_name: data.first_name,
         last_name: data.last_name,
@@ -84,108 +76,89 @@ const Profile: React.FC = () => {
     fetchProfile();
   }, []);
 
+  // Responsive view switcher with route sync
+  useEffect(() => {
+    if (!isMobile && location.pathname === '/profile') {
+      // Mobile → Desktop: redirect to dashboard and open modal
+      navigate('/dashboard', { replace: true });
+      setTimeout(() => {
+        window.dispatchEvent(new Event('openProfileDesktopModal'));
+      }, 10);
+    } else if (isMobile && location.pathname !== '/profile') {
+      // Only redirect if not already on profile
+      if (location.pathname !== '/profile') {
+        navigate('/profile', { replace: true });
+      }
+    }
+    // eslint-disable-next-line
+  }, [isMobile]);
+
   return (
     <UserContext.Provider value={{ user: profile, setUser: setProfile }}>
-      <div className="profile-page">
+      <div className="profile-page" style={{ position: 'relative', minHeight: '100vh' }}>
         {/* Left panel (desktop header) */}
         {!isMobile && <ProfileLeftPanel user={profile} />}
-
-        {/* Right panel (main profile logic) */}
-        <ProfileRightPanel
-          isMobile={isMobile}
-          profile={profile}
-          editMode={editMode}
-          form={form}
-          mobileForm={mobileForm}
-          loading={loading}
-          errorMsg={errorMsg}
-          avatarPreview={avatarPreview}
-          showAvatarPicker={showAvatarPicker}
-          defaultAvatars={defaultAvatars}
-          setEditMode={setEditMode}
-          setForm={setForm}
-          setMobileForm={setMobileForm}
-          setAvatarPreview={isMobile ? setLocalMobileAvatarPreview : setAvatarPreview}
-          setShowAvatarPicker={setShowAvatarPicker}
-          onSave={async () => {
-            setLoading(true);
-            setErrorMsg('');
-            try {
-              const avatarToSend = avatarPreview || originalAvatar || profile?.avatar;
-              await fetch('/api/profile', {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${sessionStorage.getItem('token')}`,
-                },
-                body: JSON.stringify({
-                  ...form,
-                  avatar: avatarToSend,
-                }),
-              });
-
-              // Re-fetch updated profile
-              await fetchProfile();
-              setUser(profile); // Update global context
-              setAvatarPreview(avatarPreview || originalAvatar || profile?.avatar || '');
-              setEditMode(false);
-              setOriginalAvatar(null);
-            } catch (err) {
-              console.error(err);
-              setErrorMsg('Could not save changes.');
-            }
-            setLoading(false);
-          }}
-          onUpdate={async (e: React.FormEvent, closeModal?: () => void) => {
-            e.preventDefault();
-            setLoading(true);
-            setErrorMsg('');
-            try {
-              const avatarToSendMobile =
-                localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar;
-
-              await fetch('/api/profile', {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${sessionStorage.getItem('token')}`,
-                },
-                body: JSON.stringify({
-                  first_name: mobileForm.first_name || '',
-                  last_name: mobileForm.last_name || '',
-                  email: mobileForm.email || '',
-                  phone_number: mobileForm.phone || '',
-                  relationship: profile?.relationship || '',
-                  blind_full_name: profile?.blind_full_name || '',
-                  blind_phone_number: profile?.blind_phone_number || '',
-                  blind_age: profile?.blind_age || '',
-                  impairment_level: profile?.impairment_level || '',
-                  device_id: profile?.device_id || '',
-                  avatar: avatarToSendMobile,
-                }),
-              });
-
-              // Re-fetch updated profile
-              await fetchProfile();
-              setUser(profile); // Update global context
-              setAvatarPreview(localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar || '');
-              setEditMode(false);
-              setLocalMobileAvatarPreview(null);
-              setOriginalAvatar(null);
-              if (closeModal) closeModal();
-            } catch (err) {
-              console.error(err);
-              setErrorMsg('Could not save changes.');
-            }
-            setLoading(false);
-          }}
-          originalAvatar={originalAvatar}
-          localProfileAvatarPreview={avatarPreview}
-          setLocalProfileAvatarPreview={setAvatarPreview}
-          localMobileAvatarPreview={localMobileAvatarPreview}
-          setLocalMobileAvatarPreview={setLocalMobileAvatarPreview}
-          fetchProfile={fetchProfile}
-        />
+        {/* Fade transition wrapper */}
+        <div ref={fadeRef} style={{ transition: 'opacity 0.22s', opacity: 1 }}>
+          {/* Mobile view: ProfileMobile always rendered on /profile route */}
+          {isMobile && (
+            <ProfileMobile
+              profile={profile}
+              editMode={editMode}
+              mobileForm={mobileForm}
+              loading={loading}
+              errorMsg={errorMsg}
+              avatarPreview={avatarPreview}
+              showAvatarPicker={showAvatarPicker}
+              defaultAvatars={defaultAvatars}
+              setEditMode={setEditMode}
+              setMobileForm={setMobileForm}
+              setAvatarPreview={setAvatarPreview}
+              setShowAvatarPicker={setShowAvatarPicker}
+              onUpdate={async (e, closeModal) => {
+                e.preventDefault();
+                setLoading(true);
+                setErrorMsg('');
+                try {
+                  const avatarToSend = localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar;
+                  await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: {
+                      Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      first_name: mobileForm.first_name || '',
+                      last_name: mobileForm.last_name || '',
+                      email: mobileForm.email || '',
+                      phone_number: mobileForm.phone || '',
+                      relationship: profile?.relationship || '',
+                      blind_full_name: profile?.blind_full_name || '',
+                      blind_phone_number: profile?.blind_phone_number || '',
+                      blind_age: profile?.blind_age || '',
+                      impairment_level: profile?.impairment_level || '',
+                      device_id: profile?.device_id || '',
+                      avatar: avatarToSend,
+                    }),
+                  });
+                  await fetchProfile();
+                  setUser(profile);
+                  setAvatarPreview(localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar || '');
+                  setEditMode(false);
+                  setLocalMobileAvatarPreview(null);
+                  setOriginalAvatar(null);
+                  if (closeModal) closeModal();
+                } catch (err) {
+                  console.error(err);
+                  setErrorMsg('Could not save changes.');
+                }
+                setLoading(false);
+              }}
+              originalAvatar={originalAvatar}
+              fetchProfile={fetchProfile}
+            />
+          )}
+        </div>
       </div>
     </UserContext.Provider>
   );

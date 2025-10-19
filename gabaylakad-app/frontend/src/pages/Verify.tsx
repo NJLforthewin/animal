@@ -24,7 +24,7 @@ const Verify: React.FC = () => {
     setVerifying(true);
     setMessage('Verifying...');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/verify', {
+  const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -34,7 +34,7 @@ const Verify: React.FC = () => {
         setMessage('Thank you for registering your device! Logging you in...');
         setVerified(true);
         // Automatically log in
-        const loginRes = await fetch('http://localhost:5000/api/auth/login', {
+  const loginRes = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }), // use password from query params

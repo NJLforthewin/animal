@@ -30,7 +30,8 @@ const ProfileDesktop: React.FC<ProfileDesktopProps> = (props) => {
   const [language, setLanguage] = useState('English');
   const [dark, setDark] = useState(false);
   const toggleDark = () => setDark((d) => !d);
-
+    const [activeSection, setActiveSection] = useState<'account' | 'preferences' | 'settings'>('account');
+    const [transition, setTransition] = useState<'none' | 'forward' | 'back'>('none');
   // Color palette and style variables
   const palette = {
     primary: '#232946',

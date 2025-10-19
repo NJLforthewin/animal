@@ -1,10 +1,10 @@
 
+
 import React, { useState } from 'react';
 import ProfileSecurityModaldesktop from './ProfileSecurityModaldesktop';
 
 const ProfileSettingsSectiondesktop: React.FC = () => {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
-  // TODO: Add state for Notifications and Device Management modals if needed
 
   const palette = {
     primary: '#232946',
@@ -17,7 +17,6 @@ const ProfileSettingsSectiondesktop: React.FC = () => {
 
   return (
     <div style={{ maxWidth: 420, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
-  {/* Heading removed to avoid duplication with overlay modal */}
       {/* Security Button */}
       <button
         type="button"
@@ -91,8 +90,8 @@ const ProfileSettingsSectiondesktop: React.FC = () => {
         Device Management
       </button>
 
-      {/* Security Modal */}
-      <ProfileSecurityModaldesktop open={showSecurityModal} onClose={() => setShowSecurityModal(false)} />
+    {/* Security Modal */}
+    <ProfileSecurityModaldesktop open={showSecurityModal} onClose={() => setShowSecurityModal(false)} />
     </div>
   );
 };

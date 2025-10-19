@@ -34,7 +34,7 @@ export const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose 
     console.log('[ChangePasswordForm] Request body:', { currentPassword, newPassword });
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/change-password', {
+  const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/change-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

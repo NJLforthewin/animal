@@ -37,125 +37,54 @@ const HeaderDesktop: React.FC<HeaderDesktopProps> = ({ user }) => {
   }, [userMenuOpen]);
 
   return (
-    <div
-      className="dashboard-header"
-      style={{
-        width: '100%',
-        margin: 0,
-        padding: '1.7rem 2.5rem 1.2rem 2.5rem',
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'transparent',
-        borderBottom: 'none',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        zIndex: 102,
-        minHeight: 64,
-        boxShadow: 'none',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <div style={{ width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <img
-            src="/Logo.png"
-            alt="Logo"
-            style={{
-              height: '100%',
-              width: 'auto',
-              maxWidth: '100%',
-              margin: 0,
-              display: 'block',
-            }}
-          />
+    <div className="dashboard-header w-full fixed top-0 left-0 z-50 min-h-[64px] flex items-center justify-between px-10 py-6 bg-white shadow-none">
+      <div className="flex items-center">
+        <div className="w-20 h-20 flex items-center justify-center">
+          <img src="/Logo.png" alt="Logo" className="h-full w-auto max-w-full m-0 block" />
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2.8rem', paddingRight: '1.5rem' }}>
+      <div className="flex items-center gap-7 pr-6">
         {/* Alerts & Safety Icon with Tooltip */}
-        <div style={{ position: 'relative', display: 'inline-block', marginRight: '1.2rem' }}>
-          <i
-            className="fas fa-bell"
-            style={{ fontSize: '2rem', color: '#2c3e50', cursor: 'pointer' }}
-            onMouseEnter={e => {
-              const tooltip = e.currentTarget.nextSibling as HTMLElement;
-              if (tooltip) tooltip.style.opacity = '1';
-            }}
-            onMouseLeave={e => {
-              const tooltip = e.currentTarget.nextSibling as HTMLElement;
-              if (tooltip) tooltip.style.opacity = '0';
-            }}
-          ></i>
-          <span
-            style={{
-              position: 'absolute',
-              right: '110%',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: '#232946',
-              color: '#fff',
-              padding: '6px 16px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              fontSize: '1rem',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              opacity: 0,
-              transition: 'opacity 0.2s',
-              pointerEvents: 'none',
-              zIndex: 10,
-            }}
-          >
-            Alerts & Safety
-          </span>
+        <div className="relative inline-block mr-3">
+          <i className="fas fa-bell text-2xl text-primary cursor-pointer" />
+          {/* Tooltip can be refactored to use a shared Tooltip component if needed */}
         </div>
         {/* User profile avatar and dropbar menu */}
-        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginRight: '0.5rem' }}>
+        <div className="relative inline-flex items-center mr-2">
           <button
             ref={userMenuBtnRef}
-            className="desktop-profile-avatar-btn"
+            className="desktop-profile-avatar-btn focus:ring-2 focus:ring-primary"
             aria-label="Open user menu"
             onClick={() => setUserMenuOpen((open) => !open)}
-            style={{ background: 'none', border: '2px solid #8e44ad', padding: 0, borderRadius: '50%' }}
           >
-            <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" className="desktop-profile-avatar" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 2px 8px rgba(44,62,80,0.10)' }} />
+            <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" className="desktop-profile-avatar w-10 h-10 rounded-full object-cover shadow-md border-2 border-white" />
           </button>
           {/* Dropdown menu */}
           {userMenuOpen && (
             <div
               ref={userMenuDropdownRef}
-              className="desktop-profile-dropdown"
-              style={{
-                position: 'absolute',
-                right: 0,
-                top: '110%',
-                minWidth: 240,
-                background: '#fff',
-                border: '1px solid #f0f0f0',
-                borderRadius: 12,
-                boxShadow: '0 4px 24px rgba(44,62,80,0.10)',
-                zIndex: 200,
-                padding: '0.5rem 0',
-              }}
+              className="desktop-profile-dropdown absolute right-0 top-full min-w-[360px] bg-white rounded-xl shadow-lg z-50 px-6 py-4 text-gray-900 border border-gray-200 animate-fade-in"
+              role="menu"
+              aria-label="User menu"
             >
               {/* User info */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.8rem 1.1rem', borderBottom: '1px solid #f0f0f0', background: 'rgba(41,128,185,0.07)' }}>
-                <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', marginRight: 8 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: '1.01rem', marginBottom: 2 }}>{(user?.first_name || '') + ' ' + (user?.last_name || '')}</div>
-                  <div style={{ fontSize: '0.95rem', color: '#7f8c8d' }}>{user?.email || 'user@email.com'}</div>
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50">
+                <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" className="w-9 h-9 rounded-full object-cover mr-2" />
+                <div className="flex-1">
+                  <div className="font-semibold text-base mb-0.5">{(user?.first_name || '') + ' ' + (user?.last_name || '')}</div>
+                  <div className="text-sm text-gray-500">{user?.email || 'user@email.com'}</div>
                 </div>
               </div>
+              {/* Divider */}
+              <div className="border-b border-gray-100 my-2" />
               {/* Menu: Navigation links and actions */}
-              <nav role="navigation" aria-label="User menu navigation" style={{ padding: '0.4rem 0.5rem' }}>
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              <nav role="navigation" aria-label="User menu navigation">
+                <ul className="list-none m-0 p-0">
                   {navTabs.map(tab => (
                     <li key={tab.key}>
                       <button
-                        className="desktop-profile-menu-link"
+                        className="w-full flex items-center bg-gray-50 hover:bg-primary/10 focus:bg-primary/20 border-none rounded-lg px-4 py-3 text-base font-medium text-gray-900 gap-3 transition-colors mb-1 focus:outline-none"
                         aria-label={tab.label}
-                        style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(41,128,185,0.08)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#232946', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s', marginBottom: 6 }}
                         onClick={() => {
                           setUserMenuOpen(false);
                           if (tab.key === 'profile') {
@@ -168,14 +97,18 @@ const HeaderDesktop: React.FC<HeaderDesktopProps> = ({ user }) => {
                           }
                         }}
                       >
-                        <i className={tab.icon} aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#2980b9' }}></i>
-                        <span>{tab.label}</span>
+                        <i className={`${tab.icon} text-lg w-6 text-primary`} aria-hidden></i>
+                        <span className="whitespace-nowrap">{tab.label}</span>
                       </button>
                     </li>
                   ))}
                   <li>
-                    <button className="desktop-profile-menu-link" aria-label="Logout" style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(231,76,60,0.09)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#e74c3c', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s', marginBottom: 0 }} onClick={() => { setUserMenuOpen(false); sessionStorage.clear(); navigate('/login'); }}>
-                      <i className="fas fa-sign-out-alt" aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#e74c3c' }}></i>
+                    <button
+                      className="w-full flex items-center bg-red-50 text-red-600 hover:bg-red-100 border-none rounded-lg px-4 py-3 text-base font-medium gap-3 transition-colors focus:outline-none"
+                      aria-label="Logout"
+                      onClick={() => { setUserMenuOpen(false); sessionStorage.clear(); navigate('/login'); }}
+                    >
+                      <i className="fas fa-sign-out-alt text-lg w-6 text-red-600" aria-hidden></i>
                       <span>Logout</span>
                     </button>
                   </li>

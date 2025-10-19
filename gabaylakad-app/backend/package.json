@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "main": "src/app.ts",
   "scripts": {
-    "start": "ts-node src/app.ts",
-    "build": "tsc",
-    "dev": "ts-node-dev src/app.ts"
+  "start": "ts-node src/app.ts",
+  "build": "tsc",
+  "dev": "ts-node-dev src/app.ts",
+  "simulate": "ts-node src/utils/dataSimulator.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.17.1",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.3",

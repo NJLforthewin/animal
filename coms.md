@@ -1,18 +1,4 @@
--- GabayLakad: Reset All Table Content
--- This script will delete all rows from every table in the gabaylakad_db schema.
--- It disables and re-enables foreign key checks to avoid constraint errors.
-
-USE gabaylakad_db;
-SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE user_contact;
-TRUNCATE TABLE sensor_log;
-TRUNCATE TABLE location_log;
-TRUNCATE TABLE gps_tracking;
-TRUNCATE TABLE alert;
-TRUNCATE TABLE device;
-TRUNCATE TABLE contact;
-TRUNCATE TABLE user;
-SET FOREIGN_KEY_CHECKS = 1;
+OPEN 3 
 
 
 cd gabaylakad-app/frontend
@@ -25,6 +11,11 @@ cd gabaylakad-app/backend/db
 
 USE gabay_db;
 
+node init-db.js
+
+npm run simulate
+
+npm run dev
 
 cd "/c/Users/RYZEN 7/Desktop/redis"
 ./redis-server.exe

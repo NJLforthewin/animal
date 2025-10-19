@@ -1,8 +1,16 @@
 import express, { Request, Response, NextFunction } from 'express';
+import dotenv from 'dotenv';
+dotenv.config();
 import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/authRoutes';
 import mainRoutes from './routes/mainRoutes';
+import deviceRoutes from './routes/deviceRoutes';
+import alertRoutes from './routes/alertRoutes';
+import batteryRoutes from './routes/batteryRoutes';
+import reflectorRoutes from './routes/reflectorRoutes';
+import locationRoutes from './routes/locationRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
 
 const app = express();
 app.use(cors());
@@ -19,27 +27,18 @@ app.post('/api/log', (req: Request, res: Response) => {
 
 
 // Dashboard card endpoints (dummy data)
-app.get('/api/dashboard/location', (req, res) => {
-    res.json({ location: 'Unknown', lat: 0, lng: 0 });
-});
-app.get('/api/dashboard/battery', (req, res) => {
-    res.json({ battery: '100%', status: 'Full' });
-});
-app.get('/api/dashboard/activity', (req, res) => {
-    res.json({ activity: 'Inactive', lastActive: 'Never' });
-});
-app.get('/api/dashboard/emergency', (req, res) => {
-    res.json({ emergency: false, lastTriggered: null });
-});
-app.get('/api/dashboard/nightreflector', (req, res) => {
-    res.json({ nightReflector: 'Off', lastChanged: null });
-});
-app.get('/api/dashboard/activitylog', (req, res) => {
-    res.json({ logs: [] });
-});
+// Dashboard card endpoints now use real RESTful routes/controllers
+// For dashboard, frontend should call /api/devices, /api/batteries, /api/locations, /api/reflectors, /api/alerts, etc.
+// TODO: Integrate with IoT device data stream for live dashboard updates
 
 app.use('/api/auth', authRoutes);
 app.use('/api', mainRoutes);
+app.use('/api/devices', deviceRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/batteries', batteryRoutes);
+app.use('/api/reflectors', reflectorRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'API is running' });

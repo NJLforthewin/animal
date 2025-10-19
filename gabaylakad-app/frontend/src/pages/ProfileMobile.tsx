@@ -140,8 +140,17 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
         onAvatarClick={() => setShowAvatarPicker(true)}
         isEditing={profileEditMode}
         onEditToggle={() => {
-          setProfileEditMode((v) => !v);
-        }}
+  if (profileEditMode) {
+    // If cancelling edit, reset form to original profile values
+    setMobileForm({
+      first_name: profile?.first_name || '',
+      last_name: profile?.last_name || '',
+      email: profile?.email || '',
+      phone: profile?.phone_number || '',
+    });
+  }
+  setProfileEditMode((v) => !v);
+}}
         form={mobileForm}
         setForm={setMobileForm}
         loading={loading}

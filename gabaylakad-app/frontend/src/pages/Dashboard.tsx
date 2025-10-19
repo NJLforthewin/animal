@@ -346,7 +346,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
       <HeaderDesktop user={user} />
       <main className="main-content-expanded" style={{ paddingTop: 128 }}>
         {/* Desktop Profile Card Section */}
-  <div className="dashboard-profile-card" style={{ display: 'flex', alignItems: 'flex-start', background: 'linear-gradient(to right, #2a9fd6, #8e44ad)', borderRadius: '2rem', boxShadow: '0 8px 32px rgba(44,62,80,0.18)', padding: '2.5rem 2.5rem 2.5rem 2rem', minHeight: '190px', position: 'relative', flexWrap: 'wrap', fontFamily: 'Segoe UI, Open Sans, Roboto, Arial, sans-serif' }}>
+        <div className="dashboard-profile-card" style={{ display: 'flex', alignItems: 'flex-start', background: 'linear-gradient(to right, #2a9fd6, #8e44ad)', borderRadius: '2rem', boxShadow: '0 8px 32px rgba(44,62,80,0.18)', padding: '2.5rem 2.5rem 2.5rem 2rem', minHeight: '190px', position: 'relative', flexWrap: 'wrap', fontFamily: 'Segoe UI, Open Sans, Roboto, Arial, sans-serif' }}>
           <div style={{ width: 100, height: 100, borderRadius: '50%', background: 'rgba(52, 152, 219, 0.85)', boxShadow: '0 0 10px rgba(95, 111, 255, 0.6), 0 20px 30px rgba(155, 89, 182, 0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '2.5rem', color: '#fff', marginRight: '2.2rem', marginBottom: '0.5rem', flexShrink: 0 }}>
             <span>{(user?.blind_full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}</span>
           </div>
@@ -407,9 +407,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%', margin: '0.05rem 0 0 0.05rem',}}>
           <DashboardActivityLogCard />
         </div>
-        
       </main>
-      
     </div>
   );
 }

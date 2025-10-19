@@ -7,19 +7,20 @@ const navItems = [
 ];
 
 const SettingsNavigation: React.FC<{ onSelect: (key: string) => void }> = ({ onSelect }) => (
-  <div style={{ background: 'transparent' }}>
+  <div className="bg-transparent">
     {navItems.map(item => (
       <div
         key={item.key}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '1.1rem 1.2rem', borderBottom: '1px solid #f7f7f7', fontWeight: 600,
-          color: '#232946', fontSize: '1.08rem', cursor: 'pointer',
-        }}
+        className="flex items-center justify-between px-5 py-4 border-b border-gray-100 font-semibold text-base text-gray-900 cursor-pointer hover:bg-primary/10 transition-colors"
         onClick={() => onSelect(item.key)}
+        role="button"
+        tabIndex={0}
       >
-        <span><i className={item.icon} style={{ marginRight: 12, color: '#232946' }}></i>{item.label}</span>
-        <i className="fas fa-chevron-right" style={{ color: '#232946', fontSize: '1.1rem' }}></i>
+        <span className="flex items-center gap-3">
+          <i className={`${item.icon} text-lg text-primary`} aria-hidden></i>
+          {item.label}
+        </span>
+        <i className="fas fa-chevron-right text-lg text-gray-400" aria-hidden></i>
       </div>
     ))}
   </div>
