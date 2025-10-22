@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 import LanguageSelector from './LanguageSelector';
 import SecuritySection from './SecuritySection';
 import SettingsNavigation from './SettingsNavigation';
@@ -150,7 +151,7 @@ export const ChangePasswordForm: React.FC<{ onClose: () => void }> = ({ onClose 
           }}
           disabled={loading}
         >
-          {loading ? 'Saving...' : 'Save'}
+          {loading ? <LoadingSpinner compact /> : 'Save'}
         </button>
       </div>
     </form>

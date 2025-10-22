@@ -1,3 +1,52 @@
+/* Location page mobile header inner content: matches dashboard-header-mobile style */
+.location-header-mobile {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 8.96px 12.8px 8.96px 3.84px !important;
+  min-height: 82.91px;
+  height: 82.91px;
+  box-sizing: border-box !important;
+  gap: 0 !important;
+}
+/* Location page mobile header wrapper: matches dashboard-header mobile style, transparent */
+.location-header-mobile-wrapper {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  border-bottom: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1101;
+  min-height: 100.81px;
+  height: 100.81px;
+  padding: 8.96px 3.84px;
+  font-size: 1.1rem;
+  background: transparent;
+}
+/* Move Leaflet zoom controls to bottom right, aligned with reload button */
+
+.leaflet-control-zoom {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 90px !important; /* 24px above reload button */
+  z-index: 1101 !important;
+  box-shadow: 0 2px 8px #0002 !important;
+}
+
+@media (max-width: 600px) {
+  .leaflet-control-zoom {
+    right: 32px !important;
+    bottom: 90px !important;
+  }
+}
 
 .dashboard-profile-card {
   

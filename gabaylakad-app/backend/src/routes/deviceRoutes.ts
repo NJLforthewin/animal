@@ -4,12 +4,15 @@ import {
   getDeviceById,
   createDevice,
   updateDevice,
-  deleteDevice
+  deleteDevice,
+  getDeviceBySerial
 } from '../controllers/deviceController';
 
 const router = Router();
 
+
 router.get('/', getAllDevices);
+router.get('/serial/:serial_number', getDeviceBySerial);
 router.get('/:id', getDeviceById);
 router.post('/', createDevice);
 router.put('/:id', updateDevice);

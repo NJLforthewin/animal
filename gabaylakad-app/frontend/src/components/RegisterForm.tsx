@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 
 const impairmentOptions = [
@@ -104,7 +105,7 @@ const RegisterForm: React.FC = () => {
                     email,
                     phone_number: phoneNumber,
                     impairment_level: impairmentLevel,
-                    device_id: deviceId,
+                    serial_number: deviceId,
                     relationship: rel,
                     blind_full_name: userFullName,
                     blind_age: userAge, 
@@ -264,7 +265,7 @@ const RegisterForm: React.FC = () => {
                     </div>
                 )}
                 <button type="submit" className="btn-primary w-full max-w-lg py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 text-lg font-semibold transition-all" disabled={loading}>
-                    {loading ? <span className="loading-spinner"></span> : 'Create Caregiver Account'}
+                    {loading ? <LoadingSpinner compact /> : 'Create Caregiver Account'}
                 </button>
                 <div className="pt-2 text-center w-full max-w-lg">
                     <p className="text-sm text-gray-600">

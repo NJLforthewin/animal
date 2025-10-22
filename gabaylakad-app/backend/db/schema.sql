@@ -1,3 +1,8 @@
+-- === Location Tracking Enhancements (Real-time Map Support) ===
+
+-- Telemetry columns for richer location data are now part of CREATE TABLE location_log below.
+-- Index idx_location_device_timestamp is already present in CREATE TABLE location_log and does not need to be created separately.
+-- View for latest location per device is defined in the dashboard aggregation section below.
 -- Finalized GabayLakad Database Schema
 -- Run on MySQL server. Assumes user has sufficient privileges.
 
@@ -63,6 +68,7 @@ CREATE TABLE IF NOT EXISTS device (
 CREATE TABLE IF NOT EXISTS alert (
   alert_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   device_id INT(8) NOT NULL,
+serial_number VARCHAR(100) NULL,
   user_id INT(8) NOT NULL,
   alert_type VARCHAR(50) NOT NULL,
   alert_description TEXT NOT NULL,
@@ -84,6 +90,7 @@ CREATE TABLE IF NOT EXISTS alert (
 CREATE TABLE IF NOT EXISTS gps_tracking (
   gps_track_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   device_id INT(8) NOT NULL,
+serial_number VARCHAR(100) NULL,
   latitude FLOAT(10,6) NOT NULL,
   longitude FLOAT(10,6) NOT NULL,
   timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -99,8 +106,18 @@ CREATE TABLE IF NOT EXISTS gps_tracking (
 CREATE TABLE IF NOT EXISTS location_log (
   log_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   device_id INT(8) NOT NULL,
+serial_number VARCHAR(100) NULL,
   latitude FLOAT(10,6) NOT NULL,
   longitude FLOAT(10,6) NOT NULL,
+  altitude FLOAT NULL,
+  speed FLOAT NULL,
+  heading FLOAT NULL,
+  accuracy FLOAT NULL,
+  signal_strength INT NULL,
+  street_name VARCHAR(255) NULL,
+  city_name VARCHAR(255) NULL,
+  place_name VARCHAR(255) NULL,
+  context_tag VARCHAR(255) NULL,
   timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_loc_device_time (device_id, timestamp),
@@ -115,6 +132,7 @@ CREATE TABLE IF NOT EXISTS location_log (
 CREATE TABLE IF NOT EXISTS sensor_log (
   sens_log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   device_id INT(8) NOT NULL,
+serial_number VARCHAR(100) NULL,
   sensor_type VARCHAR(64) NOT NULL,
   sensor_value DECIMAL(10,4) DEFAULT NULL,
   timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -211,7 +229,10 @@ INNER JOIN (
 ) latest ON sl.device_id = latest.device_id AND sl.timestamp = latest.max_ts;
 
 CREATE OR REPLACE VIEW dashboard_location_latest AS
-SELECT ll.device_id, ll.latitude, ll.longitude, ll.timestamp
+SELECT ll.device_id, ll.latitude, ll.longitude, ll.timestamp,
+  ll.street_name, ll.city_name, ll.place_name, ll.context_tag,
+  ll.poi_name, ll.poi_type, ll.poi_distance,
+  ll.poi_distance_m, ll.poi_distance_km, ll.poi_lat, ll.poi_lon
 FROM location_log ll
 INNER JOIN (
   SELECT device_id, MAX(timestamp) AS max_ts
@@ -249,6 +270,21 @@ SELECT
   s.timestamp AS sensor_timestamp,
   l.latitude,
   l.longitude,
+  l.altitude,
+  l.speed,
+  l.accuracy,
+  l.signal_strength,
+  l.street_name,
+  l.city_name,
+  l.place_name,
+  l.context_tag,
+  l.poi_name,
+  l.poi_type,
+  l.poi_distance,
+  l.poi_distance_m,
+  l.poi_distance_km,
+  l.poi_lat,
+  l.poi_lon,
   l.timestamp AS location_timestamp,
   r.status AS reflector_status,
   r.timestamp AS reflector_timestamp,
@@ -273,10 +309,11 @@ LEFT JOIN dashboard_activity_latest act ON act.device_id = d.device_id;
 -- ----------------------------------------------------
 -- Index housekeeping (additional helpful indexes)
 -- ----------------------------------------------------
-CREATE INDEX IF NOT EXISTS idx_battery_device_timestamp ON battery_status(device_id, timestamp);
-CREATE INDEX IF NOT EXISTS idx_sensor_type_timestamp ON sensor_log(sensor_type, timestamp);
-CREATE INDEX IF NOT EXISTS idx_alert_type_timestamp ON alert(alert_type, timestamp);
-CREATE INDEX IF NOT EXISTS idx_location_device_timestamp ON location_log(device_id, timestamp);
-CREATE INDEX IF NOT EXISTS idx_activity_device_timestamp ON activity_log(device_id, timestamp);
+-- CREATE INDEX statements below must be run manually after checking for existence, as MySQL does not support IF NOT EXISTS for indexes.
+-- CREATE INDEX idx_battery_device_timestamp ON battery_status(device_id, timestamp);
+-- CREATE INDEX idx_sensor_type_timestamp ON sensor_log(sensor_type, timestamp);
+-- CREATE INDEX idx_alert_type_timestamp ON alert(alert_type, timestamp);
+-- CREATE INDEX idx_location_device_timestamp ON location_log(device_id, timestamp);
+-- CREATE INDEX idx_activity_device_timestamp ON activity_log(device_id, timestamp);
 
 -- End of schema.

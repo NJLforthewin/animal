@@ -1,6 +1,20 @@
+
 import { Request, Response } from 'express';
 import pool from '../../db/db';
 import { ResultSetHeader } from 'mysql2';
+
+// Get device by serial number
+export const getDeviceBySerial = async (req: Request, res: Response) => {
+    try {
+        const { serial_number } = req.params;
+        const [rows] = await pool.query('SELECT * FROM device WHERE serial_number = ?', [serial_number]);
+        const devices = rows as any[];
+        if (devices.length === 0) return res.status(404).json({ message: 'Device not found' });
+        res.json(devices[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Database error', error });
+    }
+};
 
 // TODO: integrate with IoT device data stream
 

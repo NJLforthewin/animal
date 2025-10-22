@@ -1,4 +1,15 @@
 import pool from '../../db/db';
+import http from 'http';
+import { reverseGeocodeNominatim } from './reverseGeocode';
+// socket client is optional and only required when emitting directly
+let ioClient: any = null;
+try {
+  // lazy require to avoid adding dependency unless used
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ioClient = require('socket.io-client');
+} catch (err) {
+  ioClient = null;
+}
 
 // Helper: get a random int in range
 function randInt(min: number, max: number) {
@@ -10,12 +21,78 @@ function randFloat(min: number, max: number) {
   return Math.random() * (max - min) + min;
 }
 
+// Cebu bounding box
+const CEBU = {
+  latMin: 10.2800,
+  latMax: 10.3700,
+  lonMin: 123.8600,
+  lonMax: 123.9400
+};
+
+function clamp(v: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, v));
+}
+
+function metersToLatDeg(m: number) {
+  return m / 111320; // approximate meters per degree latitude
+}
+
+function metersToLonDeg(m: number, lat: number) {
+  const latRad = lat * (Math.PI / 180);
+  return m / (111320 * Math.cos(latRad));
+}
+
+function postLocationToApi(port: number, payload: any) {
+  return new Promise<void>((resolve, reject) => {
+    const data = JSON.stringify(payload);
+    const options = {
+      hostname: '127.0.0.1',
+      port,
+      path: '/api/locations',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data)
+      }
+    };
+    const req = http.request(options, (res) => {
+      // consume response
+      res.on('data', () => {});
+      res.on('end', () => resolve());
+    });
+    req.on('error', (err) => reject(err));
+    req.write(data);
+    req.end();
+  });
+}
+
+function emitLocationToSocket(backendUrl: string, payload: any) {
+  return new Promise<void>((resolve, reject) => {
+    if (!ioClient) return reject(new Error('socket.io-client not available'));
+    try {
+      const socket = ioClient(backendUrl, { transports: ['websocket'] });
+      socket.on('connect', () => {
+        socket.emit('location_update', payload);
+        socket.disconnect();
+        resolve();
+      });
+      // timeout in case connect never happens
+      setTimeout(() => {
+        try { socket.disconnect(); } catch (e) {}
+        reject(new Error('socket connect timeout'));
+      }, 3000);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 // Insert a sample device if none exists
 export async function insertDevice() {
   const [rows] = await pool.query('SELECT device_id FROM device LIMIT 1');
   if ((rows as any[]).length === 0) {
-    await pool.query("INSERT INTO device (device_serial_number, model, owner_id) VALUES (?, ?, ?)", [
-      'DEV-' + randInt(1000,9999), 'Model-X', 1
+    await pool.query("INSERT INTO device (serial_number) VALUES (?)", [
+      'DEV-' + randInt(1000,9999)
     ]);
     console.log('Inserted sample device');
   } else {
@@ -25,9 +102,11 @@ export async function insertDevice() {
 
 // Insert random battery status
 export async function insertBatteryStatus() {
-  const [devices] = await pool.query('SELECT device_id FROM device');
+  const [devices] = await pool.query('SELECT device_id, serial_number FROM device');
   for (const device of devices as any[]) {
-    const battery = randFloat(10, 100).toFixed(1);
+    // Device-specific battery offset for uniqueness
+    const offset = (device.device_id % 13) * 2.5;
+    const battery = (randFloat(10, 100 - offset) + offset).toFixed(1);
     await pool.query('INSERT INTO battery_status (device_id, battery_level) VALUES (?, ?)', [device.device_id, battery]);
     console.log(`Inserted battery status for device ${device.device_id}: ${battery}%`);
   }
@@ -37,10 +116,64 @@ export async function insertBatteryStatus() {
 export async function insertLocationLog() {
   const [devices] = await pool.query('SELECT device_id FROM device');
   for (const device of devices as any[]) {
-    const lat = randFloat(14.5, 14.7);
-    const lng = randFloat(120.9, 121.1);
-    await pool.query('INSERT INTO location_log (device_id, latitude, longitude, timestamp) VALUES (?, ?, ?, NOW())', [device.device_id, lat, lng]);
-    console.log(`Inserted location for device ${device.device_id}: (${lat}, ${lng})`);
+    let valid = false;
+  let lat = 0, lng = 0;
+  let geo: any = null;
+  let poi: any = null;
+    // Device-specific offset for location uniqueness
+    const latOffset = ((device.device_id % 17) * 0.0015) + randFloat(0, 0.002);
+    const lngOffset = ((device.device_id % 19) * 0.0012) + randFloat(0, 0.002);
+    while (!valid) {
+      lat = clamp(randFloat(CEBU.latMin, CEBU.latMax) + latOffset, CEBU.latMin, CEBU.latMax);
+      lng = clamp(randFloat(CEBU.lonMin, CEBU.lonMax) + lngOffset, CEBU.lonMin, CEBU.lonMax);
+      geo = await reverseGeocodeNominatim(lat, lng);
+      if (geo && geo.city_name && geo.city_name.toLowerCase().includes('cebu city')) {
+        valid = true;
+      }
+    }
+    if (geo) {
+      // Always call findNearestPOI and log the result
+      const { findNearestPOI } = require('./reverseGeocode');
+      poi = await findNearestPOI(lat, lng, 2000);
+      if (!poi) {
+        poi = await findNearestPOI(lat, lng, 20000);
+      }
+      if (poi) {
+        console.log(`[Simulator POI] device ${device.device_id}: POI: ${poi.poi_name}, type: ${poi.poi_type}, distance: ${poi.poi_distance_m}m (${poi.poi_distance_km.toFixed(2)}km)`);
+      } else {
+        console.log(`[Simulator POI] device ${device.device_id}: No POI found within 20km.`);
+      }
+      await pool.query(
+        `INSERT INTO location_log (
+          device_id, serial_number, latitude, longitude, altitude, speed, heading, accuracy, signal_strength,
+          timestamp, street_name, city_name, place_name, context_tag,
+          poi_name, poi_type, poi_distance_m, poi_distance_km, poi_lat, poi_lon, poi_distance
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          device.device_id,
+          device.serial_number ?? null,
+          lat,
+          lng,
+          geo.altitude ?? null,
+          geo.speed ?? null,
+          geo.heading ?? null,
+          geo.accuracy ?? null,
+          geo.signal_strength ?? null,
+          geo.street_name ?? null,
+          geo.city_name ?? null,
+          geo.place_name ?? null,
+          geo.context_tag ?? null,
+          poi?.poi_name ?? null,
+          poi?.poi_type ?? null,
+          poi?.poi_distance_m ?? null,
+          poi?.poi_distance_km ?? null,
+          poi?.poi_lat ?? null,
+          poi?.poi_lon ?? null,
+          poi?.poi_distance_km ?? null
+        ]
+      );
+      console.log(`Inserted location for device ${device.device_id}: (${lat.toFixed(6)}, ${lng.toFixed(6)}) with context: ${geo.street_name}, ${geo.place_name}, ${geo.context_tag}, POI: ${poi?.poi_name}`);
+    }
   }
 }
 
@@ -57,12 +190,21 @@ export async function insertNightReflectorStatus() {
 // Insert random alert
 export async function insertAlert() {
   const [devices] = await pool.query('SELECT device_id FROM device');
+  // Get all user_ids
+  const [users] = await pool.query('SELECT user_id FROM user');
+  const userIds = (users as any[]).map(u => u.user_id);
   for (const device of devices as any[]) {
-    await pool.query(
-      'INSERT INTO alert (device_id, user_id, alert_type, alert_description, created_at) VALUES (?, ?, ?, ?, NOW())',
-      [device.device_id, 1, 'Emergency', 'Emergency button pressed']
-    );
-    console.log(`Inserted alert for device ${device.device_id}: Emergency button pressed`);
+    // Pick a random user_id for each alert
+    const userId = userIds.length > 0 ? userIds[randInt(0, userIds.length - 1)] : null;
+    if (userId) {
+      await pool.query(
+        'INSERT INTO alert (device_id, user_id, alert_type, alert_description, created_at) VALUES (?, ?, ?, ?, NOW())',
+        [device.device_id, userId, 'Emergency', 'Emergency button pressed']
+      );
+      console.log(`Inserted alert for device ${device.device_id}: Emergency button pressed for user ${userId}`);
+    } else {
+      console.log('No users found, skipping alert insert.');
+    }
   }
 }
 
@@ -71,8 +213,11 @@ export async function insertActivityLog() {
   const [devices] = await pool.query('SELECT device_id FROM device');
   const events = ['walking', 'idle', 'charging', 'error'];
   for (const device of devices as any[]) {
-    const event = events[randInt(0, events.length-1)];
-    const payload = JSON.stringify({ event, steps: randInt(0, 5000), timestamp: new Date().toISOString() });
+    // Device-specific event selection for uniqueness
+    const eventIdx = (device.device_id + randInt(0, events.length-1)) % events.length;
+    const event = events[eventIdx];
+    const steps = randInt(0, 5000) + (device.device_id % 100);
+    const payload = JSON.stringify({ event, steps, timestamp: new Date().toISOString() });
     await pool.query('INSERT INTO activity_log (device_id, event_type, payload, timestamp) VALUES (?, ?, ?, NOW())', [device.device_id, event, payload]);
     console.log(`Inserted activity log for device ${device.device_id}: ${event}`);
   }
@@ -87,7 +232,100 @@ export async function runSimulation() {
     await insertNightReflectorStatus();
     await insertAlert();
     await insertActivityLog();
-    console.log('IoT data simulation complete.');
+    console.log('Initial IoT data simulation complete.');
+
+    // Start continuous realistic movement simulation per device if requested
+  const continuous = process.argv.includes('--continuous') || process.env.SIMULATE_CONTINUOUS === '1';
+  const port = process.env.PORT ? Number(process.env.PORT) : 5000;
+  const emitMode = process.argv.includes('--emit-socket') ? 'socket' : process.argv.includes('--emit-api') ? 'api' : process.env.SIMULATE_EMIT_MODE || 'api';
+  const backendUrl = process.env.SIMULATOR_BACKEND_URL || `http://localhost:${port}`;
+    if (continuous) {
+      console.log('Starting continuous movement simulation (Cebu-bounded)');
+      setInterval(async () => {
+        try {
+          const [devicesList] = await pool.query('SELECT device_id FROM device');
+          for (const device of devicesList as any[]) {
+            // get last known location
+            const [rows] = await pool.query('SELECT latitude, longitude FROM location_log WHERE device_id = ? ORDER BY timestamp DESC LIMIT 1', [device.device_id]);
+            let lat = rows && (rows as any[])[0] ? Number((rows as any[])[0].latitude) : randFloat(CEBU.latMin, CEBU.latMax);
+            let lng = rows && (rows as any[])[0] ? Number((rows as any[])[0].longitude) : randFloat(CEBU.lonMin, CEBU.lonMax);
+
+            // Movement mode: walking (70%) or driving (30%)
+            const mode = Math.random() < 0.7 ? 'walking' : 'driving';
+            const meters = mode === 'walking' ? randFloat(1, 8) : randFloat(15, 80); // meters per tick
+            const angle = randFloat(0, Math.PI * 2);
+            const deltaLat = metersToLatDeg(meters) * Math.cos(angle);
+            const deltaLon = metersToLonDeg(meters, lat) * Math.sin(angle);
+
+            let newLat = lat + deltaLat;
+            let newLng = lng + deltaLon;
+
+            // clamp to Cebu bounding box
+            newLat = clamp(newLat, CEBU.latMin, CEBU.latMax);
+            newLng = clamp(newLng, CEBU.lonMin, CEBU.lonMax);
+
+            // Use Nominatim reverse geocoding for contextual fields, retry until Cebu City
+            let geo = null;
+            let tryLat = newLat, tryLng = newLng;
+            let attempts = 0;
+            do {
+              geo = await reverseGeocodeNominatim(tryLat, tryLng);
+              attempts++;
+              // If not Cebu City, pick a new random point in bounding box
+              if (!geo.city_name || !geo.city_name.toLowerCase().includes('cebu city')) {
+                tryLat = randFloat(CEBU.latMin, CEBU.latMax);
+                tryLng = randFloat(CEBU.lonMin, CEBU.lonMax);
+              }
+            } while (!geo.city_name || !geo.city_name.toLowerCase().includes('cebu city'));
+            const payload = {
+              device_id: device.device_id,
+              latitude: Number(tryLat.toFixed(6)),
+              longitude: Number(tryLng.toFixed(6)),
+              timestamp: new Date().toISOString(),
+              street_name: geo.street_name,
+              city_name: geo.city_name,
+              place_name: geo.place_name,
+              context_tag: geo.context_tag
+            };
+            // Debug: print payload to verify contextual fields
+            console.log('Simulated location payload:', payload);
+            // Emit according to mode: API (default), socket, or direct DB fallback
+            if (emitMode === 'socket') {
+              try {
+                await emitLocationToSocket(backendUrl, payload);
+                console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via SOCKET`);
+              } catch (err) {
+                // fallback to API then DB
+                try {
+                  await postLocationToApi(port, payload);
+                  console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via API (socket failed)`);
+                } catch (err2) {
+                  await pool.query(
+                    'INSERT INTO location_log (device_id, latitude, longitude, timestamp, street_name, city_name, place_name, context_tag) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)',
+                    [device.device_id, payload.latitude, payload.longitude, payload.street_name, payload.city_name, payload.place_name, payload.context_tag]
+                  );
+                  console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via direct DB insert (socket+API failed)`);
+                }
+              }
+            } else {
+              try {
+                await postLocationToApi(port, payload);
+                console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via API`);
+              } catch (err) {
+                // fallback: direct DB insert
+                await pool.query(
+                  'INSERT INTO location_log (device_id, latitude, longitude, timestamp, street_name, city_name, place_name, context_tag) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)',
+                  [device.device_id, payload.latitude, payload.longitude, payload.street_name, payload.city_name, payload.place_name, payload.context_tag]
+                );
+                console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via direct DB insert (API failed)`);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Continuous simulation error:', err);
+        }
+      }, 5000);
+    }
   } catch (err) {
     console.error('Simulation error:', err);
   }

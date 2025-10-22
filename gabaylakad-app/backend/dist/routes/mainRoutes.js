@@ -6,6 +6,7 @@ const authMiddleware_1 = require("../middleware/authMiddleware");
 const router = (0, express_1.Router)();
 router.get('/dashboard', authMiddleware_1.authenticateToken, mainController_1.dashboard);
 router.get('/profile', authMiddleware_1.authenticateToken, mainController_1.profile);
+router.put('/profile', authMiddleware_1.authenticateToken, mainController_1.updateProfile);
 router.get('/history', authMiddleware_1.authenticateToken, mainController_1.history);
 router.get('/location', authMiddleware_1.authenticateToken, mainController_1.location);
 router.get('/sensor', authMiddleware_1.authenticateToken, mainController_1.sensor);

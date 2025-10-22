@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
+import { useLocation } from 'react-router-dom';
 import { UserContext, UserType } from '../pages/Profile';
 import { Outlet } from 'react-router-dom';
 
@@ -23,12 +24,27 @@ const MainLayout: React.FC = () => {
     fetchUser();
   }, []);
 
+  const location = useLocation();
+  const isMobile = window.innerWidth <= 600;
+  const isProfileMobile = isMobile && location.pathname === '/profile';
   return (
     <UserContext.Provider value={{ user, setUser }}>
       <div className="app-layout" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e3f0ff 0%, #b6cfff 100%)', overflowX: 'hidden' }}>
-        <Header />
+        {/* Only render Header if not on /location, so overlay header is always used for Location page */}
+        {location.pathname !== '/location' && <Header />}
         {/* <Sidebar /> */}
-        <main className="main-content">
+        <main
+          className="main-content"
+          style={{
+            padding: 0,
+            margin: 0,
+            minHeight: '100vh',
+            width: '100vw',
+            position: 'relative',
+            overflowY: isProfileMobile ? 'hidden' : 'auto',
+            background: 'none',
+          }}
+        >
           <Outlet />
         </main>
       </div>

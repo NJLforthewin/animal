@@ -20,7 +20,6 @@ interface ProfileModalProps {
 
 const nameRegex = /^[A-Za-z\s-]+$/;
 const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-const phoneRegex = /^\d{11}$/;
 
 function validateName(name: string) {
   const trimmed = name.trim();

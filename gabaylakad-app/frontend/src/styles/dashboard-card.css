@@ -1,8 +1,9 @@
 .dashboard-card {
-  border-radius: 18px;
-  box-shadow:
-    0 0 10px rgba(95, 111, 255, 0.6),
-    0 20px 30px rgba(155, 89, 182, 0.4);
+  /* Reset for desktop: simple box, keep margin, padding, size, position */
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
   padding: 1.7rem 1.2rem;
   min-width: 260px;
   max-width: 360px;
@@ -15,8 +16,107 @@
   overflow: hidden;
 }
 
+/* Desktop label/value alignment helpers */
+
+.dashboard-card .card-title {
+  font-weight: 700;
+  font-size: 1.08rem;
+  margin-bottom: 12px;
+  flex: 1 1 auto; /* allow title to grow and shrink */
+  min-width: 0; /* enable text-overflow inside flex */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* title row: title at left, icon at right */
+.dashboard-card .card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* let title take available space */
+  gap: 0.5rem;
+}
+
+.dashboard-card .card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.dashboard-card .card-icon svg {
+  height: 1.25rem; /* slightly larger standard icon size to match title visibility */
+  width: auto;
+  display: block;
+  fill: currentColor;
+  opacity: 0.9;
+}
+
+.dashboard-card .card-icon { padding-left: 8px; }
+
+.dashboard-card .field-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 8px;
+}
+
+.dashboard-card .field-label {
+  flex: 0 0 120px; /* fixed label column width on desktop */
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-card .field-value {
+  flex: 1 1 auto;
+  min-width: 0; /* allow ellipsis in flex children */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* view button and inline preview (desktop) */
+.dashboard-card .card-view {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+}
+
+.dashboard-card .card-preview {
+  position: absolute;
+  left: 12px;
+  bottom: 48px;
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(46,61,73,0.12);
+  min-width: 220px;
+  max-width: 320px;
+  z-index: 40;
+}
+
+.dashboard-card .card-preview .pv-row { margin-bottom: 6px; font-size: 0.92rem; }
+.dashboard-card .card-preview .pv-row b { margin-right: 8px; font-weight:600; }
+
 @media (max-width: 600px) {
   .dashboard-card {
+    /* DO NOT CHANGE MOBILE STYLES */
     min-width: 0;
     max-width: 95vw;
     width: 100%;
@@ -27,6 +127,29 @@
     box-sizing: border-box;
     box-shadow: 0 4px 10px rgba(44,62,80,0.10);
     border: none !important;
+  }
+
+  /* On mobile, revert to stacked rows so the helper classes don't break mobile layout */
+  .dashboard-card .field-row {
+    display: block;
+    gap: 0;
+    margin-bottom: 6px;
+  }
+
+  .dashboard-card .field-label {
+    display: block;
+    flex: none;
+    width: auto;
+    margin-bottom: 4px;
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+  }
+
+  .dashboard-card .field-value {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
   }
 }
 

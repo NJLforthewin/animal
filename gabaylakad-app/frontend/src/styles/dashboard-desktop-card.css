@@ -1,0 +1,105 @@
+:root {
+  --page-bg: #111827;
+  --bg: #1f2937;
+  --border: #374151;
+  --text: #f9fafb;
+  --muted: #9ca3af;
+  --accent: #3b82f6;
+  --radius: 10px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-container {
+  display: grid;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.dashboard-desktop-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-desktop-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.dashboard-desktop-card .card-title-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.dashboard-desktop-card .card-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dashboard-desktop-card.desktop-card-pos .card-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--muted);
+}
+
+.dashboard-desktop-card .field-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-desktop-card .field-row + .field-row {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.dashboard-desktop-card .field-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.dashboard-desktop-card .field-value {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+  text-align: right;
+  min-width: 140px; /* reserve space so spinner doesn't push layout */
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.dashboard-desktop-card .field-value.street.primary {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .card-container {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .dashboard-desktop-card:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+}

@@ -1,148 +1,202 @@
-@media (max-width: 600px) {
-  .dashboard-mobile-card-row {
+/* ========================================
+ * Tokens (Style I - Dark Mode)
+ * ========================================
+*/
+:root {
+  --page-bg: #111827; /* Very dark blue */
+  --bg: #1f2937; /* Dark gray */
+  --border: #374151; /* Medium gray */
+  --text: #f9fafb; /* Off-white */
+  --muted: #9ca3af; /* Light gray */
+  --accent: #3b82f6; /* Bright blue */
+  --radius: 10px;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-container {
+    display: grid;
+    gap: 20px;
+    max-width: 1400px; /* Wider container for 5 cards */
+    margin: 0 auto;
+    
+    /* --- DESKTOP VIEW --- */
+    /* 1 row (5 columns) */
+    grid-template-columns: repeat(5, 1fr);
+}
+
+/* ========================================
+ * Card Shell (Style I)
+ * ========================================
+*/
+.dashboard-mobile-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Gap between rows */
+    position: relative; /* For the icon */
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    min-height: 120px; /* Add this line */
+}
+
+.dashboard-mobile-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+
+/* ========================================
+ * Title Row
+ * ========================================
+*/
+.card-title-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mobile-card-pos .card-icon {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--muted);
+}
+
+/* ========================================
+ * Field Rows (Content Area)
+ * ========================================
+*/
+.field-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    flex-wrap: wrap;
-    overflow: visible;
-  }
-  .dashboard-mobile-patient-card {  
-    width: 100%;
-    max-width: 100%;
-    background: linear-gradient(90deg, #2a9fd6 0%, #8e44ad 100%);
-    border-radius: 2rem;
-    box-shadow: 0 8px 32px rgba(44,62,80,0.18);
-    padding: 2rem 1rem 1.5rem 1rem;
-    margin: 2rem 0 1.5rem 0;
-    min-height: 190px;
-    position: relative;
-    font-family: 'Segoe UI', 'Open Sans', 'Roboto', Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    color: #fff;
-  }
 }
-@media (max-width: 600px) {
-  .dashboard-mobile-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: transparent !important;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.18);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 2rem;
-    color: #fff;
-    margin-bottom: 1rem;
-  }
-  .dashboard-mobile-condition {
-    display: inline-flex;
-    align-items: center;
-    background: transparent !important;
-    border-radius: 1rem;
-    padding: 0.2rem 0.9rem;
-    font-weight: 700;
-    color: #fff;
-    font-size: 1.05rem;
-    margin-bottom: 1rem;
-  }
-  .dashboard-mobile-device-status {
-    display: inline-flex;
-    align-items: center;
-    background: linear-gradient(90deg, #43cea2 0%, #185a9d 100%);
-    border: 1.5px solid rgba(255,255,255,0.35);
-    border-radius: 999px;
-    padding: 0.5rem 1.5rem;
-    font-size: 1rem;
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(44,62,80,0.10);
-    letter-spacing: 0.2px;
-    min-width: 220px;
-    margin-bottom: 0.5rem;
-  }
-  .dashboard-mobile-export-buttons {
-    width: 100%;
-    margin: 0.5rem 0 1.2rem 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-sizing: border-box;
-    background: transparent !important;
-  }
-}
-/* dashboard-mobile.css: Mobile-only styles for DashboardMobile */
 
-@media (max-width: 600px) {
-  .dashboard-mobile-container {
-    padding-left: 1.1rem;
-    padding-right: 1.1rem;
-    box-sizing: border-box;
-    width: 100vw;
-    min-height: 100vh;
-    background: transparent !important;
-    overflow-x: hidden;
-  }
-  .dashboard-mobile-cards-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(3, auto);
-    gap: 1.1rem;
-    margin-bottom: 2rem;
-    margin-top: 1.2rem;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .dashboard-mobile-card {
-    background: transparent;
-    border-radius: 1.2rem;
-    box-shadow:
-    0 0 10px rgba(95, 111, 255, 0.6),
-    0 20px 30px rgba(155, 89, 182, 0.4);
-    padding: 0.3rem;
-    min-height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: stretch;
-    width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-  .dashboard-mobile-card-inner {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    overflow: hidden;
-  }
-  .dashboard-mobile-activity-log {
-    width: 100%;
-    margin-top: 2.2rem;
-    margin-bottom: 1.2rem;
-    padding-left: 0.1rem;
-    padding-right: 0.1rem;
-    box-sizing: border-box;
-  }
-  .dashboard-mobile-header {
+/* Add a divider line between rows */
+.field-row + .field-row {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}
+
+.field-label {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.field-value {
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: right;
+    min-width: 140px; /* reserve space so spinner doesn't expand rows */
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.field-value.street.primary {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent); /* Use accent color */
+}
+
+/* --- MOBILE RESPONSIVE --- */
+
+/* * TABLET / MOBILE (like your image)
+ * 2 columns, 3 rows
+*/
+@media (max-width: 900px) {
+    .card-container {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto;
+    }
     
-    padding-top: 1.1rem;
-    padding-bottom: 0.7rem;
-    padding-left: 1.1rem;
-    padding-right: 1.1rem;
-    background: transparent;
-    width: 100vw;
-    box-sizing: border-box;
-  }
+    /* This targets the 5th card (Reflector) and makes it 
+     * span the full 2-column width, creating the 3rd row.
+    */
+    .dashboard-mobile-card:nth-child(5) {
+        grid-column: 1 / -1; 
+    }
+}
+
+/* Small phones (<= 600px) - tighten spacing to avoid horizontal overflow */
+@media (max-width: 600px) {
+    .card-container {
+        gap: 12px;
+        max-width: 420px; /* fit common small phones like iPhone 12 */
+        padding: 0 10px;
+        grid-template-columns: 1fr; /* stack cards vertically on narrow screens */
+    }
+
+    .dashboard-mobile-card {
+        padding: 10px; /* reduce internal padding */
+        min-height: 140px; /* reserve expanded size but allow growth if content needs more */
+        height: auto; /* allow cards to grow above min-height; prevents forced clipping */
+        overflow: hidden; /* keep visual layout stable; internal overflow will scroll if needed */
+        box-sizing: border-box; /* ensure padding included in width */
+        word-break: break-word; /* allow long words to wrap */
+    }
+
+    .field-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        min-height: 48px; /* ensure each row reserves vertical space (matches component inline minHeight:48) */
+    }
+
+    /* Label should only take the space it needs; value takes the remaining space and ellipsizes */
+    .field-label {
+        flex: 0 0 auto; /* only as wide as its content */
+        margin-right: 8px;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .field-value {
+        flex: 1 1 0; /* take remaining space */
+        min-width: 0;
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* shorten overflowing text */
+    }
+    /* Reserve minimum width to accommodate the compact spinner without layout shift */
+    .field-value { min-width: 48px; }
+
+    .field-label {
+        font-size: 0.82rem;
+    }
+
+    .card-title {
+        font-size: 0.82rem;
+    }
+
+    /* Ensure icon doesn't push layout beyond card width */
+    .mobile-card-pos .card-icon {
+        right: 10px;
+        top: 10px;
+        position: absolute;
+    }
+
+    .card-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap; /* allow the title to wrap if needed */
+    }
 }

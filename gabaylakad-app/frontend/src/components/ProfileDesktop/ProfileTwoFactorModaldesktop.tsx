@@ -1,5 +1,6 @@
 import React from 'react';
 import BaseModal from '../BaseModal';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 interface Props {
   open: boolean;
@@ -36,7 +37,7 @@ const ProfileTwoFactorModaldesktop: React.FC<Props> = ({ open, onClose }) => {
           disabled={loading}
           style={{ background: enabled ? '#e74c3c' : '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 0', fontWeight: 700, fontSize: '1.08rem', cursor: 'pointer', marginTop: 8 }}
         >
-          {loading ? (enabled ? 'Disabling...' : 'Enabling...') : (enabled ? 'Disable 2FA' : 'Enable 2FA')}
+          {loading ? <LoadingSpinner compact /> : (enabled ? 'Disable 2FA' : 'Enable 2FA')}
         </button>
         <button
           type="button"

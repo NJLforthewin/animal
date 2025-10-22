@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -193,7 +194,7 @@ const Login: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <button type="submit" className="btn-primary w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-lg font-semibold transition-all" disabled={loading}>
-                                                            {loading ? <span className="loading-spinner"></span> : 'Sign in to Dashboard'}
+                                                            {loading ? <LoadingSpinner compact /> : 'Sign in to Dashboard'}
                                                         </button>
                                                     </div>
                                                 </form>

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardCardBoundary from './DashboardCardBoundary';
 import useIsMobile from './useIsMobile';
+import MobileView from './MobileView';
+import MobileBattery from './MobileBattery';
+import LoadingValue from './LoadingValue';
+import '../styles/dashboard-desktop-card.css';
 
 const fetchBattery = async () => {
   const res = await fetch('/api/dashboard/battery', {
@@ -12,6 +16,7 @@ const fetchBattery = async () => {
 const DashboardBatteryCard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+    const isMobile = useIsMobile();
 
   useEffect(() => {
     let mounted = true;
@@ -40,36 +45,36 @@ const DashboardBatteryCard: React.FC = () => {
     return () => { mounted = false; clearInterval(interval); };
   }, []);
 
-  const isMobile = useIsMobile();
   // Accept both object and array response, map correct backend fields
   const batt = Array.isArray(data?.data) ? data.data[0] : Array.isArray(data) ? data[0] : data;
-  const batteryLevel = batt?.level ?? batt?.battery_level ?? (loading ? 'Loading...' : 'N/A');
-  const batteryTime = batt?.updated_at ?? batt?.timestamp ?? (loading ? 'Loading...' : 'N/A');
+  const level = !loading && batt && (typeof batt.level !== 'undefined' || typeof batt.battery_level !== 'undefined') && String(batt.level ?? batt.battery_level).trim()
+    ? batt.level ?? batt.battery_level
+    : '';
+  const updatedAt = !loading && batt && (typeof batt.updated_at !== 'undefined' || typeof batt.timestamp !== 'undefined') && String(batt.updated_at ?? batt.timestamp).trim()
+    ? batt.updated_at ?? batt.timestamp
+    : '';
+
   return (
     <DashboardCardBoundary>
-      {isMobile ? (
-        <div className="dashboard-mobile-card">
-          <div className="dashboard-mobile-card-inner">
-            <div style={{fontWeight:700,fontSize:'1.08rem',color:'#e67e22',marginBottom:12,letterSpacing:0.2}}>BATTERY LEVEL</div>
-            <div style={{background:'transparent',borderRadius:12,padding:'10px 0',display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8,minHeight:48,width:'100%'}}>
-              <i className="fas fa-battery-three-quarters" style={{fontSize:'2rem',color:'#e67e22',marginLeft:12}}></i>
-              <span style={{fontSize:'0.95rem',color:'#e67e22',fontWeight:600,whiteSpace:'nowrap',marginRight:12}}>{batteryLevel}</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="dashboard-card dashboard-battery-card">
-          <div className="dashboard-mobile-card-row">
-            <div style={{flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'flex-start'}}>
-              <div style={{fontWeight:700,fontSize:'1.08rem',color:'#e67e22',marginBottom:12,letterSpacing:0.2}}>BATTERY LEVEL</div>
-              <div style={{fontWeight:800,fontSize:'1.35rem',color:'#e67e22',marginBottom:8}}>{batteryLevel}</div>
-              <div style={{fontSize:'0.98rem',color:'#e67e22',fontWeight:600,marginBottom:2,display:'flex',alignItems:'center',gap:6}}>
-                <i className="fas fa-battery-three-quarters" style={{fontSize:'1rem',color:'#e67e22'}}></i>
-                {batteryTime}
+      <MobileView>
+        <MobileBattery batteryLevel={level} chargingStatus={updatedAt} loading={loading} />
+      </MobileView>
+      {isMobile ? null : (
+        <div className="dashboard-desktop-card desktop-card-pos">
+          <div>
+            <div className="card-title-row">
+              <div className="card-title">BATTERY</div>
+              <div className="card-icon" aria-hidden>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 4v2H8V4H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-1V4h-2zm3 16H5V8h14v12z"/></svg>
               </div>
             </div>
-            <div style={{background:'#fff6e9',borderRadius:12,padding:10,display:'flex',alignItems:'center',justifyContent:'center',marginLeft:10}}>
-              <i className="fas fa-battery-three-quarters" style={{fontSize:'1.5rem',color:'#e67e22'}}></i>
+            <div className="field-row">
+              <div className="field-label">Status</div>
+              <LoadingValue loading={loading} value={level} className="field-value" title={String(level)} />
+            </div>
+            <div className="field-row">
+              <div className="field-label">Timestamp</div>
+              <LoadingValue loading={loading} value={updatedAt} className="field-value" title={String(updatedAt)} />
             </div>
           </div>
         </div>
@@ -79,3 +84,6 @@ const DashboardBatteryCard: React.FC = () => {
 };
 
 export default DashboardBatteryCard;
+
+
+// BatteryModal removed: mobile view no longer shows an inline modal

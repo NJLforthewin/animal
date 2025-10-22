@@ -110,30 +110,33 @@ export const dashboard = async (req: Request, res: Response) => {
   }
 };
 
-export const profile = async (req: Request, res: Response) => {
+export const getUserProfile = async (req: Request, res: Response) => {
+  const userId = req.user?.userId;
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
   try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      console.error('[PROFILE] Unauthorized: No userId in token. Raw req.user:', req.user);
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    const result = await query(
-      'SELECT user_id, blind_full_name, blind_age, blind_phone_number, impairment_level, email, device_id, name, first_name, last_name, phone_number, relationship, avatar FROM user WHERE user_id = ?',
-      [userId]
-    );
-    const rows = Array.isArray(result.rows) ? result.rows : [];
-    const user = rows[0];
+    const result = await query('SELECT * FROM user WHERE user_id = ?', [userId]);
+  const userRows = Array.isArray(result.rows) ? (result.rows as any[]) : [];
+  const user = userRows[0] || null;
     if (!user) {
-      console.error('[PROFILE] User not found for userId:', userId);
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    // Always attach device serial number from device table
+    let device_serial_number = null;
+    if (user && user.device_id) {
+      const deviceRes = await query('SELECT serial_number FROM device WHERE device_id = ?', [user.device_id]);
+      const deviceRows = Array.isArray(deviceRes.rows) ? (deviceRes.rows as any[]) : [];
+      device_serial_number = deviceRows[0]?.serial_number || null;
+    }
+    res.json({
+      ...user,
+      device_serial_number
+    });
   } catch (error) {
-    console.error('[PROFILE] Database error:', error, '\nRequest headers:', req.headers, '\nRequest body:', req.body);
     res.status(500).json({ message: 'Database error', error });
   }
 };
-
 
 export const history = async (req: Request, res: Response) => {
   // Mock history data

@@ -1,4 +1,5 @@
 import React from 'react';
+import LoadingSpinner from '../../components/LoadingSpinner';
 // import axios, { AxiosError } from 'axios';
 import BaseModal from '../BaseModal';
 
@@ -95,7 +96,7 @@ const ProfileChangePasswordModaldesktop: React.FC<Props> = ({ open, onClose }) =
           </div>
           {error && <div style={{ color: '#e74c3c', fontSize: '0.98rem' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-            <button type="submit" disabled={loading} style={{ background: '#232946', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 0', fontWeight: 700, fontSize: '1.08rem', flex: 1, cursor: 'pointer' }}>{loading ? 'Saving...' : 'Save'}</button>
+            <button type="submit" disabled={loading} style={{ background: '#232946', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 0', fontWeight: 700, fontSize: '1.08rem', flex: 1, cursor: 'pointer' }}>{loading ? <LoadingSpinner compact /> : 'Save'}</button>
             <button type="button" onClick={onClose} disabled={loading} style={{ background: '#e0e6ed', color: '#232946', border: 'none', borderRadius: 8, padding: '0.7rem 0', fontWeight: 700, fontSize: '1.08rem', flex: 1, cursor: 'pointer' }}>Cancel</button>
           </div>
         </form>

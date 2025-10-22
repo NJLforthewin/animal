@@ -32,4 +32,10 @@ router.get('/nightreflector', getNightReflectorStatus);
 router.get('/activitylog', getActivityLog);
 router.get('/location', getLocationData);
 
+
+import { getDeviceInfo } from '../controllers/locationController';
+import { getDashboardDeviceBySerial } from '../controllers/dashboardController';
+router.get('/device/:deviceId', getDeviceInfo);
+router.get('/device/serial/:serial_number', getDashboardDeviceBySerial);
+
 export default router;

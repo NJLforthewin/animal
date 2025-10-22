@@ -95,7 +95,14 @@ const Profile: React.FC = () => {
 
   return (
     <UserContext.Provider value={{ user: profile, setUser: setProfile }}>
-      <div className="profile-page" style={{ position: 'relative', minHeight: '100vh' }}>
+      <div
+        className="profile-page"
+        style={{
+          position: 'relative',
+          minHeight: '100vh',
+          ...(isMobile ? { overflow: 'hidden' } : {}),
+        }}
+      >
         {/* Left panel (desktop header) */}
         {!isMobile && <ProfileLeftPanel user={profile} />}
         {/* Fade transition wrapper */}

@@ -1,42 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import HeaderDesktop from '../components/headerDesktop';
 // import Header from '../components/Header';
 import DashboardMobile from './DashboardMobile';
+
 import '../styles/dashboard-main.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import ExportButtons from '../components/ExportButtons';
+// import ExportButtons from '../components/ExportButtons';
 import DashboardLocationCard from '../components/DashboardLocationCard';
 import DashboardBatteryCard from '../components/DashboardBatteryCard';
 import DashboardActivityCard from '../components/DashboardActivityCard';
 import DashboardEmergencyCard from '../components/DashboardEmergencyCard';
 import DashboardNightReflectorCard from '../components/DashboardNightReflectorCard';
 import DashboardActivityLogCard from '../components/DashboardActivityLogCard';
-const navTabs = [
-  { key: 'dashboard', label: 'Dashboard', icon: 'fas fa-home' },
-  { key: 'profile', label: 'My Profile', icon: 'fas fa-user' },
-  { key: 'history', label: 'History', icon: 'fas fa-history' },
-  { key: 'location', label: 'Location Tracking', icon: 'fas fa-map-marker-alt' },
-  { key: 'sensor', label: 'Sensor Data', icon: 'fas fa-microchip' },
-];
+import { fetchDashboardData } from '../utils/fetchDashboardData';
+import { usePolling } from '../hooks/usePolling';
 
-async function fetchDashboardData() {
-  try {
-    const res = await fetch('/api/dashboard', {
-      headers: {
-        Authorization: `Bearer ${sessionStorage.getItem('token')}`,
-      },
-    });
-    const data = await res.json();
-    // If token expired due to inactivity, throw special error
-    if (data && data.error && data.error.name === 'TokenExpiredError') {
-      throw new Error('INACTIVE_LOGOUT');
-    }
-    return data;
-  } catch (err) {
-    return { error: 'Unable to load dashboard. Please try again.' };
-  }
-}
 
 
 interface DashboardProps {
@@ -55,141 +34,15 @@ function useIsMobile() {
   return isMobile;
 }
 
-// Header component for Dashboard (mobile & desktop)
-interface DashboardHeaderProps {
-  user: any;
-  isMobile: boolean;
-  navTabs: typeof navTabs;
-  userMenuOpen: boolean;
-  setUserMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  userMenuBtnRef: React.RefObject<HTMLButtonElement>;
-  userMenuDropdownRef: React.RefObject<HTMLDivElement>;
-  navigate: ReturnType<typeof useNavigate>;
-}
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user, isMobile, navTabs, userMenuOpen, setUserMenuOpen, userMenuBtnRef, userMenuDropdownRef, navigate }) => (
-  isMobile ? (
-    <div className="dashboard-header" style={{ width: '100%', margin: 0, padding: '0.7rem 0.7rem', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'transparent', borderBottom: 'none' }}>
-      {/* Bell icon on left */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <i 
-          className="fas fa-bell" 
-          style={{fontSize: '2rem', color: '#2c3e50', cursor: 'pointer', marginRight: '0.7rem'}} 
-        ></i>
-      </div>
-      {/* Spacer */}
-      <div style={{ flex: 1 }}></div>
-      {/* User avatar/profile button on rightmost */}
-      <div style={{position: 'relative', display: 'inline-flex', alignItems: 'center'}}>
-        <button
-          ref={userMenuBtnRef}
-          className="mobile-profile-avatar-btn"
-          aria-label="Open user menu"
-          onClick={() => setUserMenuOpen((open) => !open)}
-          style={{ background: 'none', border: '2px solid #8e44ad', padding: 0, borderRadius: '50%' }}
-        >
-          <img src="/Logo.png" alt="Company Logo" className="dashboard-logo" />
-        </button>
-        {/* Dropdown menu */}
-        {userMenuOpen && (
-          <div
-            ref={userMenuDropdownRef}
-            className="mobile-profile-dropdown"
-          >
-            {/* User info */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0.8rem 1.1rem', borderBottom: '1px solid #f0f0f0', background: 'rgba(41,128,185,0.07)' }}>
-              <img src="/Logo.png" alt="Company Logo" className="dashboard-logo" />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: '1.01rem', marginBottom: 2 }}>{user?.blind_full_name || user?.first_name || 'User Name'}</div>
-              </div>
-            </div>
-            {/* Menu: Navigation links and actions */}
-            <nav role="navigation" aria-label="User menu navigation" style={{ padding: '0.4rem 0.5rem' }}>
-              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}> 
-                {navTabs.map(tab => (
-                  <li key={tab.key}>
-                    <button
-                      className="mobile-profile-menu-link"
-                      aria-label={tab.label}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(41,128,185,0.08)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#232946', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s', marginBottom: 6 }}
-                      onClick={() => { setUserMenuOpen(false); navigate(`/${tab.key}`); }}
-                    >
-                      <i className={tab.icon} aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#2980b9' }}></i>
-                      <span>{tab.label}</span>
-                    </button>
-                  </li>
-                ))}
-                <li>
-                  <button className="mobile-profile-menu-link" aria-label="Logout" style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(231,76,60,0.09)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#e74c3c', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s', marginBottom: 0 }} onClick={() => { setUserMenuOpen(false); sessionStorage.clear(); navigate('/login'); }}>
-                    <i className="fas fa-sign-out-alt" aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#e74c3c' }}></i>
-                    <span>Logout</span>
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        )}
-      </div>
-    </div>
-  ) : null
-);
-
-
-// Dropbar component for desktop navigation (nav only, no header)
-const Dropbar: React.FC<{ navTabs: typeof navTabs }> = ({ navTabs }) => {
-  return (
-    <nav className="dashboard-dropbar" style={{
-      width: '100%',
-      background: 'linear-gradient(90deg, #2a9fd6 0%, #8e44ad 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '0.5rem 0',
-      position: 'fixed',
-      top: 64,
-      left: 0,
-      zIndex: 101,
-      boxShadow: '0 2px 12px rgba(44,62,80,0.08)',
-      borderBottomLeftRadius: 18,
-      borderBottomRightRadius: 18,
-      minHeight: 48,
-    }}>
-      <ul style={{ display: 'flex', alignItems: 'center', gap: 18, listStyle: 'none', margin: 0, padding: 0 }}>
-        {navTabs.map(tab => (
-          <li key={tab.key}>
-            <Link
-              to={`/${tab.key}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                color: '#fff',
-                fontWeight: 600,
-                fontSize: '1.08rem',
-                padding: '0.5rem 1.1rem',
-                borderRadius: 10,
-                textDecoration: 'none',
-                background: window.location.pathname === `/${tab.key}` ? 'rgba(255,255,255,0.13)' : 'none',
-                transition: 'background 0.18s',
-              }}
-              aria-label={tab.label}
-            >
-              <i className={tab.icon} style={{ fontSize: '1.1rem', color: '#fff' }}></i>
-              <span>{tab.label}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-};
 
 const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpanded }) => {
+  // Location modal removed
   const [data, setData] = useState<any>(null);
   const [inactiveTimeoutId, setInactiveTimeoutId] = useState<NodeJS.Timeout | null>(null);
   const INACTIVITY_LIMIT = 10 * 60 * 1000; // 10 minutes (can adjust to 15*60*1000 for 15 mins)
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   // Removed unused sidebarOpen state
   // User menu dropdown for mobile
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -213,15 +66,9 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen, isMobile]);
 
-  useEffect(() => {
-    // Check token validity on mount
-    const token = sessionStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
+  const fetchData = () => {
     fetchDashboardData()
-      .then((result) => {
+      .then((result: any) => {
         // If backend says token expired, force logout
         if (result && (result.error === 'Unable to load dashboard. Please try again.' || result.error === 'Unauthorized' || result.error?.name === 'TokenExpiredError')) {
           sessionStorage.removeItem('token');
@@ -230,10 +77,22 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
           setData(result);
         }
       })
-      .catch((err) => {
+      .catch((err: any) => {
         setData({ error: 'Unable to load dashboard. Please try again.' });
       });
+  };
+
+  useEffect(() => {
+    // Check token validity on mount
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+    fetchData();
   }, []);
+
+  usePolling(fetchData, 5000);
 
   useEffect(() => {
     const resetInactivityTimer = () => {
@@ -390,18 +249,16 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
             </div>
           </div>
         </div>
-        
         <hr className="section-divider" />
-        
-  
         {/* Cards Grid */}
         <div className="dashboard-cards-grid">
-          <DashboardLocationCard />
+          <DashboardLocationCard
+            deviceId={user?.device_serial_number || ''}
+          />
           <DashboardBatteryCard />
           <DashboardActivityCard />
           <DashboardEmergencyCard />
           <DashboardNightReflectorCard />
-          
         </div>
         {/* Activity Log - moved up and aligned right */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', width: '100%', margin: '0.05rem 0 0 0.05rem',}}>

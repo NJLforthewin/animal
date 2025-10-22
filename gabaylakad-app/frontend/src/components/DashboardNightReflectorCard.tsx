@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardCardBoundary from './DashboardCardBoundary';
 import useIsMobile from './useIsMobile';
+import MobileView from './MobileView';
+import MobileNightReflector from './MobileNightReflector';
+import LoadingValue from './LoadingValue';
+import '../styles/dashboard-desktop-card.css';
 
 const fetchNightReflector = async () => {
   const res = await fetch('/api/dashboard/nightreflector', {
@@ -43,32 +47,47 @@ const DashboardNightReflectorCard: React.FC = () => {
   const isMobile = useIsMobile();
   // Accept both object and array response, map correct backend fields
   const refl = Array.isArray(data?.data) ? data.data[0] : Array.isArray(data) ? data[0] : data;
-  const status = refl?.status ?? refl?.reflector_status ?? (loading ? 'Loading...' : 'ACTIVE');
+  const status = !loading && refl && (refl.status || refl.reflector_status) && String(refl.status ?? refl.reflector_status).trim()
+    ? refl.status ?? refl.reflector_status
+    : '';
+  // map raw status to human-friendly On/Off for desktop
+  let statusLabel = 'Unknown';
+  if (status === 'Loading...') {
+    statusLabel = 'Loading...';
+  } else if (status && status !== 'Missing') {
+    const s = String(status).toLowerCase();
+    if (s === 'on' || s === 'active') statusLabel = 'On';
+    else if (s === 'off' || s === 'inactive') statusLabel = 'Off';
+    else statusLabel = String(status);
+  } else if (status === 'Missing') {
+    statusLabel = 'Missing';
+  }
+  // show Light Sensor label on desktop as requested
+  // (not displayed on mobile currently)
+  const lastChecked = !loading && refl && refl.last_checked && String(refl.last_checked).trim()
+    ? refl.last_checked
+    : '';
   return (
     <DashboardCardBoundary>
-      {isMobile ? (
-        <div className="dashboard-mobile-card">
-          <div className="dashboard-mobile-card-inner">
-            <div style={{fontWeight:700,fontSize:'1.08rem',color:'#f1c40f',marginBottom:12,letterSpacing:0.2}}>NIGHT REFLECTOR</div>
-            <div style={{background:'transparent',borderRadius:12,padding:'10px 0',display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8,minHeight:48,width:'100%'}}>
-              <i className="fas fa-lightbulb" style={{fontSize:'2rem',color:'#f1c40f',marginLeft:12}}></i>
-              <span style={{fontSize:'0.95rem',color:'#f1c40f',fontWeight:600,whiteSpace:'nowrap',marginRight:12}}>{status}</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="dashboard-card dashboard-nightreflector-card">
-          <div className="dashboard-mobile-card-row">
-            <div style={{flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'flex-start'}}>
-              <div style={{fontWeight:700,fontSize:'1.08rem',color:'#f1c40f',marginBottom:12,letterSpacing:0.2}}>NIGHT REFLECTOR</div>
-              <div style={{fontWeight:800,fontSize:'1.35rem',color:'#f1c40f',marginBottom:8}}>{status}</div>
-              <div style={{fontSize:'0.98rem',color:'#f1c40f',fontWeight:600,marginBottom:2,display:'flex',alignItems:'center',gap:6}}>
-                <i className="fas fa-lightbulb" style={{fontSize:'1rem',color:'#f1c40f'}}></i>
-                Auto-activates in low light
+      <MobileView>
+        <MobileNightReflector status={status} lastChecked={lastChecked} loading={loading} />
+      </MobileView>
+      {isMobile ? null : (
+        <div className="dashboard-desktop-card desktop-card-pos">
+          <div>
+            <div className="card-title-row">
+              <div className="card-title">NIGHT REFLECTOR</div>
+              <div className="card-icon" aria-hidden>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
               </div>
             </div>
-            <div style={{background:'#fffbe9',borderRadius:12,padding:10,display:'flex',alignItems:'center',justifyContent:'center',marginLeft:10}}>
-              <i className="fas fa-lightbulb" style={{fontSize:'1.5rem',color:'#f1c40f'}}></i>
+            <div className="field-row">
+              <div className="field-label">Status</div>
+              <LoadingValue loading={loading} value={statusLabel} className="field-value" title={String(statusLabel)} />
+            </div>
+            <div className="field-row">
+              <div className="field-label">Last Checked</div>
+              <LoadingValue loading={loading} value={lastChecked} className="field-value" title={String(lastChecked)} />
             </div>
           </div>
         </div>
@@ -78,3 +97,5 @@ const DashboardNightReflectorCard: React.FC = () => {
 };
 
 export default DashboardNightReflectorCard;
+
+// NightModal removed: mobile view no longer shows an inline modal

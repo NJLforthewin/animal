@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useSearchParams } from 'react-router-dom';
 
 
 const ResetPassword: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const email = searchParams.get('email');
     const token = searchParams.get('token');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -74,10 +74,10 @@ const ResetPassword: React.FC = () => {
                         />
                     </div>
                     <button type="submit" disabled={loading}
-                        className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white font-semibold text-lg transition-all"
-                        style={{background: 'linear-gradient(90deg, #3498db 0%, #8e44ad 100%)'}}>
-                        {loading ? 'Resetting...' : 'Reset Password'}
-                    </button>
+                                        className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white font-semibold text-lg transition-all"
+                                        style={{background: 'linear-gradient(90deg, #3498db 0%, #8e44ad 100%)'}}>
+                                        {loading ? <LoadingSpinner compact /> : 'Reset Password'}
+                                    </button>
                 </form>
                 {message && (
                     <div className="mt-6 text-center text-blue-700 font-medium">

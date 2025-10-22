@@ -167,38 +167,55 @@ export const register = async (req: Request, res: Response) => {
         email,
         phone_number,
         impairment_level,
-        device_id,
         password,
         relationship,
         blind_full_name,
         blind_age,
         blind_phone_number,
+        serial_number
     } = req.body;
     const name = `${firstName} ${lastName}`.trim();
-    if (!firstName || !lastName || !email || !phone_number || !impairment_level || !device_id || !password || !blind_full_name || !blind_age) {
+    if (!firstName || !lastName || !email || !phone_number || !impairment_level || !password || !blind_full_name || !blind_age || !serial_number) {
         return res.status(400).json({ message: 'Please fill in all required fields' });
     }
     try {
-        // Check if device is active (simulate activation check)
-        const isActive = true; // Replace with actual activation logic if needed
-        if (!isActive) {
-            return res.status(403).json({ message: 'Device is not yet activated. Please contact customer service for activation.' });
+        // Check if device with this serial number already exists
+        const deviceRes = await query('SELECT device_id FROM device WHERE serial_number = ?', [serial_number]);
+        const deviceRows = Array.isArray(deviceRes.rows) ? (deviceRes.rows as any[]) : [];
+        let device_id;
+        if (deviceRows.length > 0) {
+            // Serial number already exists, fail registration
+            return res.status(409).json({ message: 'Device serial number already exists. Please check your device or use a different serial number.' });
+        } else {
+            // Insert device and get device_id
+            const deviceResult: any = await query('INSERT INTO device (serial_number, is_active) VALUES (?, ?)', [serial_number, 1]);
+            device_id = deviceResult.insertId;
         }
-        // Check if device is already registered to a user
-        const deviceUserRes = await query('SELECT * FROM user WHERE device_id = ?', [device_id]);
-        const deviceUserRows = Array.isArray(deviceUserRes.rows) ? deviceUserRes.rows : [];
-        if (deviceUserRows.length > 0) {
-            return res.status(409).json({ message: 'The Device ID you entered already exists. Please check your device manual for the correct Device ID or use a different one.' });
-        }
-    // Generate a 6-digit verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await query(
-        'INSERT INTO user (name, first_name, last_name, email, phone_number, impairment_level, device_id, password, is_verified, verification_code, relationship, blind_full_name, blind_age, blind_phone_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [name, firstName, lastName, email, phone_number, impairment_level, device_id, hashedPassword, false, verificationCode, relationship, blind_full_name, blind_age, blind_phone_number]
-    );
-    const previewUrl = await sendResetEmail(email, verificationCode);
-    return res.status(201).json({ message: 'Registration initiated. Please check your email for the verification code.', previewUrl });
+
+        // Generate a 6-digit verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await query(
+            'INSERT INTO user (name, first_name, last_name, email, phone_number, impairment_level, device_id, password, is_verified, verification_code, relationship, blind_full_name, blind_age, blind_phone_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                name ?? null,
+                firstName ?? null,
+                lastName ?? null,
+                email ?? null,
+                phone_number ?? null,
+                impairment_level ?? null,
+                device_id ?? null,
+                hashedPassword ?? null,
+                false,
+                verificationCode ?? null,
+                relationship ?? null,
+                blind_full_name ?? null,
+                blind_age ?? null,
+                blind_phone_number ?? null
+            ]
+        );
+        const previewUrl = await sendResetEmail(email, verificationCode);
+        return res.status(201).json({ message: 'Registration initiated. Please check your email for the verification code.', serial_number, device_id, previewUrl });
     } catch (error) {
         console.error('Registration error:', error);
         return res.status(500).json({ message: 'Database error occurred', error });

@@ -1,0 +1,139 @@
+/* ========================================
+ * Tokens (Style H)
+ * ========================================
+*/
+:root {
+  --bg: #ffffff;
+  /* Page background must be darker for the inset effect */
+  --page-bg: #eef1f4; 
+  --border: #dbe0e4;
+  --text: #232946;
+  --muted: #848c9e; /* Darker muted for this bg */
+  --accent: #d9480f; /* A strong orange accent */
+  --radius: 12px;
+  /* The "inset" shadow */
+  --inset-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.05), 
+    0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+/* ========================================
+ * Demo Page Layout
+ * ========================================
+*/
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--page-bg);
+    padding: 1.5rem; /* Added padding for mobile */
+    color: var(--text);
+}
+
+.card-container {
+    display: grid;
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+    
+    /* --- DESKTOP VIEW --- */
+    /* 3 columns by default */
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* ========================================
+ * Card Shell (Style H)
+ * ========================================
+*/
+.dashboard-mobile-card,
+.dashboard-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--inset-shadow);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Consistent gap between rows */
+    position: relative; /* For the icon */
+}
+
+/* ========================================
+ * Title Row
+ * ========================================
+*/
+.card-title-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-bottom: 10px;
+    /* Subtle divider */
+    border-bottom: 1px solid var(--page-bg);
+}
+
+.card-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card-icon,
+.mobile-card-pos .card-icon {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    color: var(--muted);
+}
+
+/* ========================================
+ * Field Rows (Content Area)
+ * ========================================
+*/
+.field-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.field-label {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.field-value {
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    
+    /* Handle overflow */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+    text-align: right;
+}
+
+.field-value.street.primary {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent); /* Use accent color */
+}
+
+/* --- MOBILE RESPONSIVE --- */
+
+/* * TABLET / MOBILE
+ * 2-column layout
+*/
+@media (max-width: 900px) {
+    .card-container {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    /* This targets the 5th card (Reflector) and makes it 
+     * span the full 2-column width
+    */
+    .dashboard-mobile-card:nth-child(5) {
+        grid-column: 1 / -1; 
+    }
+}

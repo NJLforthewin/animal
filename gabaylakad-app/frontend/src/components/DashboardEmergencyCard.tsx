@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import DashboardCardBoundary from './DashboardCardBoundary';
 import useIsMobile from './useIsMobile';
+import MobileView from './MobileView';
+import MobileEmergency from './MobileEmergency';
+import LoadingValue from './LoadingValue';
+import '../styles/dashboard-desktop-card.css';
 
 const fetchEmergency = async () => {
   const res = await fetch('/api/dashboard/emergency', {
@@ -43,32 +47,34 @@ const DashboardEmergencyCard: React.FC = () => {
   const isMobile = useIsMobile();
   // Accept both object and array response, map correct backend fields
   const emer = Array.isArray(data?.data) ? data.data[0] : Array.isArray(data) ? data[0] : data;
-  const status = emer?.alert_type ?? emer?.status ?? (loading ? 'Loading...' : 'READY');
+  const status = !loading && emer && (emer.alert_type || emer.status) && String(emer.alert_type ?? emer.status).trim()
+    ? emer.alert_type ?? emer.status
+    : '';
+  // default trigger type value as requested
+  const triggerType = !loading && emer && emer.trigger_type && String(emer.trigger_type).trim()
+    ? emer.trigger_type
+    : '';
   return (
     <DashboardCardBoundary>
-      {isMobile ? (
-        <div className="dashboard-mobile-card">
-          <div className="dashboard-mobile-card-inner">
-            <div style={{fontWeight:700,fontSize:'1.08rem',color:'#c0392b',marginBottom:12,letterSpacing:0.2}}>EMERGENCY SYSTEM</div>
-            <div style={{background:'transparent',borderRadius:12,padding:'10px 0',display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8,minHeight:48,width:'100%'}}>
-              <i className="fas fa-exclamation-triangle" style={{fontSize:'2rem',color:'#c0392b',marginLeft:12}}></i>
-              <span style={{fontSize:'0.95rem',color:'#c0392b',fontWeight:600,whiteSpace:'nowrap',marginRight:12}}>{status}</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="dashboard-card dashboard-emergency-card">
-          <div className="dashboard-mobile-card-row">
-            <div style={{flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'flex-start'}}>
-              <div style={{fontWeight:700,fontSize:'1.08rem',color:'#c0392b',marginBottom:12,letterSpacing:0.2}}>EMERGENCY SYSTEM</div>
-              <div style={{fontWeight:800,fontSize:'1.35rem',color:'#232946',marginBottom:8}}>{status}</div>
-              <div style={{fontSize:'0.98rem',color:'#43ce7b',fontWeight:600,marginBottom:2,display:'flex',alignItems:'center',gap:6}}>
-                <i className="fas fa-mobile-alt" style={{fontSize:'1rem',color:'#43ce7b'}}></i>
-                SMS alerts via GSM network
+      <MobileView>
+        <MobileEmergency status={status} triggerType={triggerType} loading={loading} />
+      </MobileView>
+      {isMobile ? null : (
+        <div className="dashboard-desktop-card desktop-card-pos">
+          <div>
+            <div className="card-title-row">
+              <div className="card-title">EMERGENCY</div>
+              <div className="card-icon" aria-hidden>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2V7h2v7z"/></svg>
               </div>
             </div>
-            <div style={{background:'#fdeaea',borderRadius:12,padding:10,display:'flex',alignItems:'center',justifyContent:'center',marginLeft:10}}>
-              <i className="fas fa-exclamation-triangle" style={{fontSize:'1.5rem',color:'#c0392b'}}></i>
+            <div className="field-row">
+              <div className="field-label">Status</div>
+              <LoadingValue loading={loading} value={status} className="field-value" title={String(status)} />
+            </div>
+            <div className="field-row">
+              <div className="field-label">Trigger</div>
+              <LoadingValue loading={loading} value={triggerType} className="field-value" title={String(triggerType)} />
             </div>
           </div>
         </div>
@@ -78,3 +84,5 @@ const DashboardEmergencyCard: React.FC = () => {
 };
 
 export default DashboardEmergencyCard;
+
+// EmergencyModal removed: mobile view no longer shows an inline modal

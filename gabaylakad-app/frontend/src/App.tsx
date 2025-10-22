@@ -19,6 +19,11 @@ import EditProfile from './pages/EditProfile';
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
     constructor(props: any) {
         super(props);
+
+
+
+
+        
         this.state = { hasError: false, error: null };
     }
     static getDerivedStateFromError(error: any) {
@@ -101,7 +106,7 @@ const App: React.FC = () => {
                         <Route path="/dashboard" element={<Dashboard sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
                         <Route path="/profile" element={<ProfilePage />} />
                         <Route path="/history" element={<HistoryPage sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
-                        <Route path="/location" element={<LocationPage sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
+                        <Route path="/location" element={<LocationPage />} />
                         <Route path="/sensor" element={<SensorPage sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
                     </Route>
                     <Route path="*" element={<div>404 - Page Not Found</div>} />

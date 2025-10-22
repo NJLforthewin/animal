@@ -17,5 +17,7 @@ npm run simulate
 
 npm run dev
 
+npm start
+
 cd "/c/Users/RYZEN 7/Desktop/redis"
 ./redis-server.exe

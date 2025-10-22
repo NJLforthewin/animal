@@ -1,4 +1,5 @@
 import React from 'react';
+
 // import Header from '../components/Header';
 import ExportButtons from '../components/ExportButtons';
 import DashboardLocationCard from '../components/DashboardLocationCard';
@@ -9,15 +10,18 @@ import DashboardNightReflectorCard from '../components/DashboardNightReflectorCa
 import DashboardActivityLogCard from '../components/DashboardActivityLogCard';
 import '../styles/dashboard-main.css';
 import '../styles/dashboard-mobile.css';
+// ...existing code...
 
 interface DashboardMobileProps {
   user: any;
   data: any;
 }
 
+
 const DashboardMobile: React.FC<DashboardMobileProps> = ({ user, data }) => {
+  // Always render the card grid; let each card handle its own loading state
   return (
-  <div className="dashboard-mobile-container" style={{ overflowX: 'hidden' }}>
+    <div className="dashboard-mobile-container" style={{ overflowX: 'hidden' }}>
   {/* Header is now provided by MainLayout */}
       <main>
         {/* Profile Card Section */}
@@ -51,15 +55,15 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({ user, data }) => {
         </div>
         <hr className="section-divider" />
         {/* Cards Grid - 2 columns, 3 rows */}
-        <div className="dashboard-mobile-cards-grid">
-          <div className="dashboard-mobile-card"><div className="dashboard-mobile-card-inner"><DashboardLocationCard /></div></div>
-          <div className="dashboard-mobile-card"><div className="dashboard-mobile-card-inner"><DashboardBatteryCard /></div></div>
-          <div className="dashboard-mobile-card"><div className="dashboard-mobile-card-inner"><DashboardActivityCard /></div></div>
-          <div className="dashboard-mobile-card"><div className="dashboard-mobile-card-inner"><DashboardEmergencyCard /></div></div>
-          <div className="dashboard-mobile-card"><div className="dashboard-mobile-card-inner"><DashboardNightReflectorCard /></div></div>
+        <div className="card-container">
+          <DashboardLocationCard deviceId={user?.device_id || ''} />
+          <DashboardBatteryCard />
+          <DashboardActivityCard />
+          <DashboardEmergencyCard />
+          <DashboardNightReflectorCard />
         </div>
         {/* Export Buttons above activity log for mobile */}
-        <div className="dashboard-mobile-export-buttons">
+        <div className="dashboard-mobile-export-buttons" style={{display: 'flex', gap: '1rem', marginBottom: '2rem', marginTop: '2rem'}}>
           <ExportButtons activityLog={data?.activityLog || []} />
         </div>
         {/* Activity Log */}

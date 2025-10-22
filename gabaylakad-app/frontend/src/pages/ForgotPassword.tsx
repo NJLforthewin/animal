@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
 
 const ForgotPassword: React.FC = () => {
@@ -48,7 +49,7 @@ const ForgotPassword: React.FC = () => {
                         />
                     </div>
                     <button type="submit" className="btn-primary w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 font-semibold text-lg transition-all" disabled={loading}>
-                        {loading ? 'Sending...' : 'Send Reset Link'}
+                        {loading ? <LoadingSpinner compact /> : 'Send Reset Link'}
                     </button>
                 </form>
                 {message && (

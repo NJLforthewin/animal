@@ -1,3 +1,5 @@
+// --- Socket.IO Real-time Location Setup ---
+// ...existing code...
 import express, { Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -11,11 +13,41 @@ import batteryRoutes from './routes/batteryRoutes';
 import reflectorRoutes from './routes/reflectorRoutes';
 import locationRoutes from './routes/locationRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
-
 const app = express();
-app.use(cors());
+// Only allow frontend origin for Socket.IO and REST
+const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 app.use(express.json());
 app.use(morgan(':date[iso] :method :url :status :response-time ms'));
+// --- Socket.IO Real-time Location Setup ---
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+const server = createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: allowedOrigin,
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
+io.on('connection', (socket) => {
+    console.log('Socket.IO client connected:', socket.id);
+    socket.on('error', (err) => {
+        console.error('[Socket.IO] Client error:', err);
+    });
+    socket.on('disconnect', (reason) => {
+        console.log(`[Socket.IO] Client disconnected: ${socket.id}, reason: ${reason}`);
+    });
+});
+app.set('io', io);
+
+// Prevent Express middleware from interfering with Socket.IO
+app.use((req, res, next) => {
+    if (req.path.startsWith('/socket.io')) {
+        return next();
+    }
+    next();
+});
 
 
 // Endpoint to log frontend errors/messages to backend terminal
@@ -53,6 +85,14 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+server.listen(PORT, () => {
+        console.log(`Express + Socket.IO server running on port ${PORT}`);
+});
+
+// Robust error logging for silent backend failures
+process.on('uncaughtException', (err) => {
+    console.error('[UNCAUGHT EXCEPTION]', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[UNHANDLED REJECTION]', reason);
 });

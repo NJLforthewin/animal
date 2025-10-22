@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Maximize2, X } from 'lucide-react';
-// Simple spinner component
+import LoadingSpinner from './LoadingSpinner';
+// Simple spinner component (overlay)
 const Spinner: React.FC = () => (
   <div style={{
     display: 'flex',
@@ -130,7 +131,9 @@ const DashboardActivityLogCard: React.FC = () => {
         {/* Spinner overlay only when reloading after first load */}
         {cardLogs !== null && data === null && <Spinner />}
         {cardLogs === null ? (
-          <span style={{color: '#8e44ad', fontWeight: 600}}>Loading...</span>
+          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '1rem 0' }}>
+            <LoadingSpinner compact />
+          </div>
         ) : cardLogs.length > 0 ? (
           <div style={{width: '100%'}}>
             {cardLogs.map((log: any, idx: number) => {
@@ -207,7 +210,9 @@ const DashboardActivityLogCard: React.FC = () => {
               }}
             >
               {modalLogs === null ? (
-                <span style={{color: '#8e44ad', fontWeight: 600}}>Loading...</span>
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '1rem 0' }}>
+                  <LoadingSpinner />
+                </div>
               ) : modalLogs.length > 0 ? (
                 <div style={{width: '100%'}}>
                   {modalLogs.map((log: any, idx: number) => {

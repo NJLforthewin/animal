@@ -77,7 +77,7 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
 
 
   return (
-    <div>
+    <div style={{ height: '100vh', overflow: 'hidden' }}>
       {/* Avatar section */}
       <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
         <div style={{ position: 'relative', width: 100, height: 100 }}>

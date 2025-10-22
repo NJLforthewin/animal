@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DashboardCardBoundary from './DashboardCardBoundary';
 import useIsMobile from './useIsMobile';
+import MobileView from './MobileView';
+import LoadingValue from './LoadingValue';
+import '../styles/dashboard-desktop-card.css';
 
 const fetchActivity = async () => {
   const res = await fetch('/api/dashboard/activity', {
@@ -12,12 +15,14 @@ const fetchActivity = async () => {
 const DashboardActivityCard: React.FC = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
     let lastData: any = null;
     const fetchAndUpdate = () => {
       setLoading(true);
+      setError(null);
       fetchActivity().then(res => {
         if (mounted) {
           if (res && Object.keys(res).length > 0) {
@@ -28,9 +33,13 @@ const DashboardActivityCard: React.FC = () => {
           }
           setLoading(false);
         }
-      }).catch(() => {
-        if (mounted && lastData) {
-          setData(lastData);
+      }).catch((err) => {
+        if (mounted) {
+          setError('Failed to fetch activity data. Check network/API.');
+          console.error('[DashboardActivityCard] Fetch error:', err);
+          if (lastData) {
+            setData(lastData);
+          }
           setLoading(false);
         }
       });
@@ -43,33 +52,59 @@ const DashboardActivityCard: React.FC = () => {
   const isMobile = useIsMobile();
   // Accept both object and array response, map correct backend fields
   const act = Array.isArray(data?.data) ? data.data[0] : Array.isArray(data) ? data[0] : data;
-  const activity = act?.event_type ?? act?.last_activity ?? act?.activity_type ?? act?.activity ?? (loading ? 'Loading...' : 'N/A');
-  const steps = act?.payload?.steps ?? 'N/A';
+  const activity =
+    !loading && act && (act.event_type || act.last_activity || act.activity_type || act.activity)
+      ? act.event_type ?? act.last_activity ?? act.activity_type ?? act.activity
+      : loading
+        ? ''
+        : 'Missing';
+  const steps =
+    !loading && act && act.payload && typeof act.payload.steps !== 'undefined' && act.payload.steps !== null && String(act.payload.steps).trim()
+      ? act.payload.steps
+      : loading
+        ? ''
+        : 'Missing';
   return (
     <DashboardCardBoundary>
-      {isMobile ? (
-        <div className="dashboard-mobile-card">
-          <div className="dashboard-mobile-card-inner">
-            <div style={{fontWeight:700,fontSize:'1.08rem',color:'#8e44ad',marginBottom:12,letterSpacing:0.2}}>ACTIVITY STATUS</div>
-            <div style={{background:'transparent',borderRadius:12,padding:'10px 0',display:'flex',alignItems:'center',justifyContent:'space-between',marginTop:8,minHeight:48,width:'100%'}}>
-              <i className="fas fa-walking" style={{fontSize:'2rem',color:'#8e44ad',marginLeft:12}}></i>
-              <span style={{fontSize:'0.95rem',color:'#8e44ad',fontWeight:600,whiteSpace:'nowrap',marginRight:12}}>{activity}</span>
+      {error && (
+        <div style={{ color: 'red', marginBottom: 8, fontWeight: 'bold' }}>{error}</div>
+      )}
+      <MobileView>
+        <div className="dashboard-mobile-card mobile-card-pos">
+          <div className="card-title-row">
+            <div className="card-title">ACTIVITY STATUS</div>
+            <div className="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+                <path d="M13 2v8l5.5 2.5L13 15v7l9-5.5V7L13 2zM4 6v12l9 5.5V7L4 6z"/>
+              </svg>
             </div>
           </div>
+          <div className="field-row">
+            <div className="field-label">Status</div>
+            <LoadingValue loading={loading} value={activity} className="field-value" title={activity} />
+          </div>
+          <div className="field-row">
+            <div className="field-label">Steps</div>
+            <LoadingValue loading={loading} value={steps ? `${steps} steps today` : ''} className="field-value" title={steps ? `${steps} steps today` : ''} />
+          </div>
         </div>
-      ) : (
-        <div className="dashboard-card dashboard-activity-card">
-          <div className="dashboard-mobile-card-row">
-            <div style={{flex:1, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'flex-start'}}>
-              <div style={{fontWeight:700,fontSize:'1.08rem',color:'#8e44ad',marginBottom:12,letterSpacing:0.2}}>ACTIVITY STATUS</div>
-              <div style={{fontWeight:800,fontSize:'1.35rem',color:'#8e44ad',marginBottom:8}}>{activity}</div>
-              <div style={{fontSize:'0.98rem',color:'#2a9fd6',fontWeight:600,marginBottom:2,display:'flex',alignItems:'center',gap:6}}>
-                <i className="fas fa-walking" style={{fontSize:'1rem',color:'#2a9fd6'}}></i>
-                {steps} steps today
+      </MobileView>
+      {isMobile ? null : (
+        <div className="dashboard-desktop-card desktop-card-pos">
+          <div>
+            <div className="card-title-row">
+              <div className="card-title">ACTIVITY</div>
+              <div className="card-icon" aria-hidden>
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 2v8l5.5 2.5L13 15v7l9-5.5V7L13 2zM4 6v12l9 5.5V7L4 6z"/></svg>
               </div>
             </div>
-            <div style={{background:'#f3eafd',borderRadius:12,padding:10,display:'flex',alignItems:'center',justifyContent:'center',marginLeft:10}}>
-              <i className="fas fa-walking" style={{fontSize:'1.5rem',color:'#8e44ad'}}></i>
+            <div className="field-row">
+              <div className="field-label">Status</div>
+              <LoadingValue loading={loading} value={activity} className="field-value" title={activity} />
+            </div>
+            <div className="field-row">
+              <div className="field-label">Steps</div>
+              <LoadingValue loading={loading} value={steps ? `${steps} steps today` : ''} className="field-value" title={steps ? `${steps} steps today` : ''} />
             </div>
           </div>
         </div>
@@ -79,3 +114,5 @@ const DashboardActivityCard: React.FC = () => {
 };
 
 export default DashboardActivityCard;
+
+// ActivityModal removed: mobile view no longer shows an inline modal
