@@ -14,7 +14,6 @@ const EditProfile: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     // Fetch profile data (simulate API call)
@@ -32,7 +31,7 @@ const EditProfile: React.FC = () => {
           password: ''
         });
         setAvatarUrl(`https://ui-avatars.com/api/?name=${encodeURIComponent(data.first_name || '')}&background=ff867c&color=fff`);
-        setProfile(data);
+  // Removed erroneous setProfile call (not defined)
       } catch (err) {
         setErrorMsg('Failed to load profile');
       }

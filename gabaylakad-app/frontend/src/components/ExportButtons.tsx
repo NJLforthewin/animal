@@ -1,7 +1,6 @@
 import React from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useNavigate } from 'react-router-dom';
 import { Button, Stack } from '@mui/material'; // Import MUI components
 import FileDownloadIcon from '@mui/icons-material/FileDownload'; // Standard icon for export/download
 
@@ -71,7 +70,7 @@ export const exportPDF = (activityLog: ActivityLogItem[]) => {
 };
 
 const ExportButtons: React.FC<ExportProps> = ({ activityLog }) => {
-  const navigate = useNavigate();
+  // Removed unused navigate variable
 
   const handleExportCSV = () => {
     exportCSV(activityLog);

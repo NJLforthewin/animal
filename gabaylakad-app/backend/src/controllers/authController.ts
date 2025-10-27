@@ -1,3 +1,11 @@
+import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { query } from '../utils/db';
+import { sendResetEmail } from '../utils/email';
+import { blacklistToken, setSession, getSession } from '../utils/redisHelpers';
+
 // Change password endpoint (for logged-in users)
 export const changePassword = async (req: Request, res: Response) => {
     const userId = req.user?.userId;
@@ -26,15 +34,6 @@ export const changePassword = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Database error', error });
     }
 };
-
-import { Request, Response } from 'express';
-import bcrypt from 'bcrypt';
-import { query } from '../utils/db';
-import jwt from 'jsonwebtoken';
-import { sendResetEmail } from '../utils/email';
-import crypto from 'crypto';
-// ...existing code...
-import { blacklistToken, setSession, getSession } from '../utils/redisHelpers';
 
 // Helper to hash refresh tokens for Redis keying
 function hashRefreshToken(token: string) {

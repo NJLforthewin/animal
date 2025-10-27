@@ -1,5 +1,4 @@
 import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/dashboard-main.css';
 import '../styles/profile-mobile.css';
 import '../styles/profile-feed-mobile.css';
@@ -56,11 +55,10 @@ const Profile: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [originalAvatar, setOriginalAvatar] = useState<string | null>(null);
-  const [localMobileAvatarPreview, setLocalMobileAvatarPreview] = useState<string | null>(null);
+  // Removed unused localMobileAvatarPreview state
   const { setUser } = useContext(UserContext);
   const fadeRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
+  // Removed unused variables 'navigate' and 'location'
 
   // Shared fetchProfile
   async function fetchProfile() {
@@ -170,7 +168,6 @@ const Profile: React.FC = () => {
                   // --- END OF FIX ---
 
                   setEditMode(false);
-                  setLocalMobileAvatarPreview(null); // Reset this state as in original code
                   setOriginalAvatar(null); // Reset this state as in original code
                   if (closeModal) closeModal();
                 } catch (err) {

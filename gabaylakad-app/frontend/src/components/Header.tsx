@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserContext, UserType } from '../pages/Profile'; 
+import { UserContext } from '../pages/Profile'; 
 import {
   AppBar,
   Toolbar,
@@ -11,7 +11,6 @@ import {
   Menu,
   MenuItem,
   Divider,
-  Button,
   ListItemIcon,
   ListItemText,
   AppBarProps, // Import AppBarProps

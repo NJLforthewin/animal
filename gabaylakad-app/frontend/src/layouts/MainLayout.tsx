@@ -25,8 +25,6 @@ const MainLayout: React.FC = () => {
   }, []);
 
   const location = useLocation();
-  const isProfilePage = location.pathname === '/profile';
-  const isDashboardPage = location.pathname === '/dashboard';
 
   return (
     <UserContext.Provider value={{ user, setUser }}>

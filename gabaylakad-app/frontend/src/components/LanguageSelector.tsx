@@ -5,8 +5,6 @@ import {
     FormControl,
     InputLabel,
     SelectChangeEvent,
-    Stack,
-    Typography,
     Box
 } from '@mui/material';
 import LanguageIcon from '@mui/icons-material/Language';

@@ -11,8 +11,6 @@ import {
   ListItemText,
   ListSubheader,
   Avatar,
-  Badge,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -32,7 +30,6 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import LockIcon from '@mui/icons-material/Lock';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import PhonelinkIcon from '@mui/icons-material/Phonelink';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 // Assuming these are custom, complex modals
 import SecurityModal from '../components/SecurityModal';

@@ -1,90 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import VerifyForm, { VerifyFormProps } from '../components/VerifyForm'; 
 
 const Verify: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('Please enter the verification code sent to your email.');
-  const [verifying, setVerifying] = useState(false);
-  const [verified, setVerified] = useState(false);
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    // State
+    const [email, setEmail] = useState('');
+    const [code, setCode] = useState('');
+    const [message, setMessage] = useState('Please enter the 6-digit code sent to your email.');
+    const [errorMsg, setErrorMsg] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [isVerified, setIsVerified] = useState(false);
 
-  React.useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const emailParam = params.get('email') || '';
-  const passwordParam = params.get('password') || '';
-  setEmail(emailParam);
-  setPassword(passwordParam);
-  }, [location.search]);
+    // Get email from URL on component mount
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const emailParam = params.get('email') || '';
+        setEmail(emailParam);
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setVerifying(true);
-    setMessage('Verifying...');
-    try {
-  const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
-      });
-      const data = await res.json();
-      if (data.message && data.message.toLowerCase().includes('success')) {
-        setMessage('Thank you for registering your device! Logging you in...');
-        setVerified(true);
-        // Automatically log in
-  const loginRes = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }), // use password from query params
-        });
-        const loginData = await loginRes.json();
-        if (loginData.token) {
-          sessionStorage.setItem('token', loginData.token);
-          setTimeout(() => navigate('/dashboard'), 1200);
-        } else {
-          setMessage('Verification succeeded, but login failed. Please login manually.');
+        if (!emailParam) {
+            setErrorMsg("No email address found. Please start the registration process again.");
         }
-      } else {
-        setMessage(data.message || 'Verification failed.');
-      }
-    } catch {
-      setMessage('Verification failed.');
-    } finally {
-      setVerifying(false);
-    }
-  };
+    }, [location.search]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 flex flex-col items-center">
-        <h2 className="text-2xl font-bold mb-4">Account Verification</h2>
-        <p className="mb-6 text-lg text-center">{message}</p>
-        {!verified && (
-          <form onSubmit={handleVerify} className="w-full max-w-xs flex flex-col gap-4">
-            <input
-              type="text"
-              className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-center text-lg"
-              placeholder="Enter verification code"
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              required
-              maxLength={6}
-              disabled={verifying}
-            />
-            <button
-              type="submit"
-              className="btn-primary py-3 px-6 rounded-lg text-white font-semibold"
-              disabled={verifying}
-            >
-              {verifying ? 'Verifying...' : 'Verify'}
-            </button>
-          </form>
-        )}
-      </div>
-    </div>
-  );
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsVerifying(true);
+        setMessage('Verifying...');
+        setErrorMsg('');
+
+        if (code.length !== 6 || !email) {
+            setErrorMsg("Please enter a valid 6-digit code.");
+            setIsVerifying(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, code }),
+            });
+            
+            const contentType = res.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                 throw new Error("Server sent an unexpected response. (Not JSON)");
+            }
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setMessage('Verification successful! You can now log in. Redirecting...');
+                setIsVerified(true);
+                
+                // No auto-login for security. Redirect to login page.
+                setTimeout(() => {
+                    navigate('/'); // Navigate to Login page
+                }, 2000);
+
+            } else {
+                setErrorMsg(data.message || 'Verification failed. Please check the code and try again.');
+            }
+        } catch (err: any) {
+            setErrorMsg(err.message || 'A network error occurred. Please try again.');
+            console.error('Verify network error:', err);
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
+    // Bundle props for the form component
+    const formProps: VerifyFormProps = {
+        code,
+        message,
+        isVerifying,
+        isVerified,
+        errorMsg,
+        handleVerify,
+        setCode,
+    };
+
+    return <VerifyForm {...formProps} />;
 };
 
 export default Verify;

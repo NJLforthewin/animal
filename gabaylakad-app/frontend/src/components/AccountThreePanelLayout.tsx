@@ -2,17 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Paper,
-  Stack,
   Typography,
   List,
-  ListItem,
   ListItemButton,
   ListItemText,
   Skeleton, // Import Skeleton for the loader
 } from '@mui/material';
 
 // Import all the panels
-import AvatarPicker from './AvatarPicker';
 import SecuritySettingsPanel from './SecuritySettingsPanel';
 import NotificationSettingsPanel from './NotificationSettingsPanel';
 import LanguagePreferencePanel from './LanguagePreferencePanel';

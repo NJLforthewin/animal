@@ -1,7 +1,34 @@
-import React, { useState } from 'react';
-import LoadingSpinner from './LoadingSpinner';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import {
+    Container,
+    Paper,
+    Box,
+    Typography,
+    TextField,
+    Button,
+    Checkbox,
+    FormControlLabel,
+    Stack,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    SelectChangeEvent,
+    InputAdornment,
+    IconButton,
+    Alert,
+    Link,
+    CircularProgress,
+    FormHelperText
+} from '@mui/material';
 
+// Import MUI Icons
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+
+// These are needed by the form, so we pass them in
 const impairmentOptions = [
     'Totally Blind',
     'Partially Sighted',
@@ -17,281 +44,185 @@ const relationshipOptions = [
     'Other',
 ];
 
+// Reusable Card Section Component
 const CardSection: React.FC<{ title: string; children: React.ReactNode }>
     = ({ title, children }) => (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-sm mb-6 p-6">
-        <h3 className="text-lg font-semibold text-blue-700 mb-4">{title}</h3>
+    <Box sx={{ height: '100%' }}>
+        <Typography variant="h6" component="h3" color="primary.dark" sx={{ mb: 2.5, fontWeight: 600, borderBottom: 1, borderColor: 'divider', pb: 1 }}>
+            {title}
+        </Typography>
         {children}
-    </div>
+    </Box>
 );
 
-const RegisterForm: React.FC = () => {
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [email, setEmail] = useState('');
-    const [relationship, setRelationship] = useState('');
-    const [otherRelationship, setOtherRelationship] = useState('');
-    const [serialNumber, setSerialNumber] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [userFullName, setUserFullName] = useState('');
-    const [userAge, setUserAge] = useState('');
-    const [userPhoneNumber, setUserPhoneNumber] = useState('');
-    const [impairmentLevel, setImpairmentLevel] = useState('');
-    const [terms, setTerms] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
-    const [successMsg, setSuccessMsg] = useState('');
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
+// Define the 'props' interface for this component
+export interface RegisterFormProps {
+    // State Values
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    email: string;
+    relationship: string;
+    otherRelationship: string;
+    serialNumber: string;
+    password: string;
+    confirmPassword: string;
+    userFullName: string;
+    userAge: string;
+    userPhoneNumber: string;
+    impairmentLevel: string;
+    terms: boolean;
+    showPassword: boolean;
+    showConfirmPassword: boolean;
+    loading: boolean;
+    errorMsg: string;
+    successMsg: string;
+    errors: { [key: string]: string };
 
-    // Validation helpers
-    const isPhoneValid = (num: string) => /^\d{11}$/.test(num);
-    const isAgeValid = (age: string) => {
-        const n = Number(age);
-        return !isNaN(n) && n >= 1 && n <= 120;
-    };
-    const isEmailValid = (email: string) => /.+@.+\..+/.test(email);
+    // Event Handlers
+    handleSubmit: (e: React.FormEvent) => void;
+    handleGoToLogin: () => void;
+    handleGoToTerms: () => void;
+    handleGoToPrivacy: () => void;
+    handleClickShowPassword: () => void;
+    handleClickShowConfirmPassword: () => void;
+    handleMouseDownPassword: (e: React.MouseEvent<HTMLButtonElement>) => void;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrorMsg('');
-        setSuccessMsg('');
-        if (
-            !firstName || !lastName || !phoneNumber || !email || !relationship ||
-            !serialNumber || !password || !confirmPassword || !userFullName ||
-            !userAge || !impairmentLevel || !terms
-        ) {
-            setErrorMsg('Please fill in all required fields!');
-            return;
-        }
-        if (!isEmailValid(email)) {
-            setErrorMsg('Please enter a valid email address!');
-            return;
-        }
-        if (password !== confirmPassword) {
-            setErrorMsg('Passwords do not match!');
-            return;
-        }
-        if (password.length < 8) {
-            setErrorMsg('Password must be at least 8 characters long!');
-            return;
-        }
-        if (!isPhoneValid(phoneNumber)) {
-            setErrorMsg('Please enter a valid caregiver phone number!');
-            return;
-        }
-        if (userPhoneNumber && !isPhoneValid(userPhoneNumber)) {
-            setErrorMsg('Please enter a valid user phone number!');
-            return;
-        }
-        if (!isAgeValid(userAge)) {
-            setErrorMsg('Please enter a valid age (1-120)!');
-            return;
-        }
-        setLoading(true);
-        // If relationship is Other, use the specified value
-        const rel = relationship === 'Other' && otherRelationship ? otherRelationship : relationship;
-        try {
-            const res = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    firstName,
-                    lastName,
-                    password,
-                    email,
-                    phone_number: phoneNumber,
-                    impairment_level: impairmentLevel,
-                    serial_number: serialNumber,
-                    relationship: rel,
-                    blind_full_name: userFullName,
-                    blind_age: userAge, 
-                    blind_phone_number: userPhoneNumber
-                }),
-            });
-            const data = await res.json();
-            console.log('Register response:', data);
-            if (res.ok) {
-                // Show assigned device info after registration
-                                setSuccessMsg(
-                                    `Registration successful!\nDevice Serial: ${data.serial_number || serialNumber}`
-                                );
-                // If backend returns token, save and redirect
-                if (data.token) {
-                    sessionStorage.setItem('token', data.token);
-                    // Fetch user profile and update UserContext before navigating
-                    try {
-                        const profileRes = await fetch('/api/profile', {
-                            headers: { Authorization: `Bearer ${data.token}` },
-                        });
-                        const profileData = await profileRes.json();
-                        // Try to update UserContext if available
-                        if (window && window.dispatchEvent) {
-                            window.dispatchEvent(new CustomEvent('user-profile-updated', { detail: profileData }));
-                        }
-                    } catch (e) {
-                        // Ignore profile fetch errors, still navigate
-                    }
-                    setTimeout(() => {
-                        navigate('/dashboard');
-                    }, 2000);
-                } else {
-                    // If no token, redirect to verification page with email and password
-                    setTimeout(() => {
-                        navigate(`/verify?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-                    }, 2000);
-                }
-            } else {
-                if (data.message && data.message.toLowerCase().includes('already assigned')) {
-                    setErrorMsg('The device serial number you entered is already assigned to another user. Please use a different device.');
-                } else if (data.message && data.message.toLowerCase().includes('already exists')) {
-                    setErrorMsg('The device serial number you entered already exists and is assigned. Please use a different device.');
-                } else {
-                    setErrorMsg(data.message || 'Registration failed!');
-                }
-                console.error('Register API error:', data);
-            }
-        } catch (err) {
-            setErrorMsg('Network error!');
-            console.error('Register network error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // State Setters
+    setFirstName: (val: string) => void;
+    setLastName: (val: string) => void;
+    setPhoneNumber: (val: string) => void;
+    setEmail: (val: string) => void;
+    setRelationship: (val: string) => void;
+    setOtherRelationship: (val: string) => void;
+    setSerialNumber: (val: string) => void;
+    setPassword: (val: string) => void;
+    setConfirmPassword: (val: string) => void;
+    setUserFullName: (val: string) => void;
+    setUserAge: (val: string) => void;
+    setUserPhoneNumber: (val: string) => void;
+    setImpairmentLevel: (val: string) => void;
+    setTerms: (val: boolean) => void;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = (props) => {
+    // Destructure all props for easy use in the JSX
+    const {
+        firstName, lastName, phoneNumber, email, relationship, otherRelationship,
+        serialNumber, password, confirmPassword, userFullName, userAge,
+        userPhoneNumber, impairmentLevel, terms, showPassword,
+        showConfirmPassword, loading, errorMsg, successMsg, errors,
+        handleSubmit, handleGoToLogin, handleGoToTerms, handleGoToPrivacy,
+        handleClickShowPassword, handleClickShowConfirmPassword, handleMouseDownPassword,
+        setFirstName, setLastName, setPhoneNumber, setEmail, setRelationship,
+        setOtherRelationship, setSerialNumber, setPassword, setConfirmPassword,
+        setUserFullName, setUserAge, setUserPhoneNumber, setImpairmentLevel, setTerms
+    } = props;
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 register-container p-4 md:p-8 bg-white rounded-lg shadow-lg max-w-3xl mx-auto">
-            {/* First row: Caregiver & Person side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <CardSection title="Caregiver Information">
-                    <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label htmlFor="fName" className="block text-sm font-medium text-gray-700 mb-2 required">First Name</label>
-                            <input id="fName" type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter your first name" />
-                        </div>
-                        <div>
-                            <label htmlFor="lName" className="block text-sm font-medium text-gray-700 mb-2 required">Last Name</label>
-                            <input id="lName" type="text" required value={lastName} onChange={e => setLastName(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter your last name" />
-                        </div>
-                        <div>
-                            <label htmlFor="pNumber" className="block text-sm font-medium text-gray-700 mb-2 required">Phone Number</label>
-                            <input id="pNumber" type="tel" required value={phoneNumber} onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter your 11-digit phone number" maxLength={11} />
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 required">Email</label>
-                            <input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter your email" />
-                        </div>
-                    </div>
-                </CardSection>
-                <CardSection title="Person You'll Monitor">
-                    <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label htmlFor="userFullName" className="block text-sm font-medium text-gray-700 mb-2 required">Full Name</label>
-                            <input id="userFullName" type="text" required value={userFullName} onChange={e => setUserFullName(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Full name of person you'll monitor" />
-                        </div>
-                        <div>
-                            <label htmlFor="userPhoneNumber" className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                            <input id="userPhoneNumber" type="tel" value={userPhoneNumber} onChange={e => setUserPhoneNumber(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Their phone number (optional)" />
-                            <p className="mt-1 text-xs text-gray-500">Leave blank if they don't have a phone</p>
-                        </div>
-                        <div>
-                            <label htmlFor="userAge" className="block text-sm font-medium text-gray-700 mb-2 required">Age</label>
-                            <input id="userAge" type="number" min={1} max={120} required value={userAge} onChange={e => setUserAge(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Age" />
-                        </div>
-                        <div>
-                            <label htmlFor="impairmentLevel" className="block text-sm font-medium text-gray-700 mb-2 required">Impairment Level</label>
-                            <select id="impairmentLevel" required value={impairmentLevel} onChange={e => setImpairmentLevel(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select impairment level</option>
-                                {impairmentOptions.map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                </CardSection>
-            </div>
-            {/* Second row: Relationship & Device and Security side by side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <CardSection title="Relationship & Device">
-                    <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label htmlFor="relationship" className="block text-sm font-medium text-gray-700 mb-2 required">Relationship</label>
-                            <select id="relationship" required value={relationship} onChange={e => setRelationship(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                                <option value="">Select relationship</option>
-                                {relationshipOptions.map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
-                            {relationship === 'Other' && (
-                                <input id="otherRelationship" type="text" value={otherRelationship} onChange={e => setOtherRelationship(e.target.value)} className="form-input w-full mt-2 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Specify relationship" />
-                            )}
-                        </div>
-                        <div>
-                            <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700 mb-2 required">Device Serial Number</label>
-                            <input id="serialNumber" type="text" required value={serialNumber} onChange={e => setSerialNumber(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Device serial number" />
-                            <p className="mt-1 text-xs text-gray-500">Unique serial number on the tracking device</p>
-                        </div>
-                    </div>
-                </CardSection>
-                <CardSection title="Security">
-                    <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 required">Create Password</label>
-                            <div className="relative">
-                                <input id="password" type={showPassword ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} className="form-input w-full pr-12 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Create password" />
-                                <span className="password-toggle" onClick={() => setShowPassword(v => !v)}>
-                                    <i className={showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'}></i>
-                                </span>
-                            </div>
-                            <p className="mt-1 text-xs text-gray-500">Minimum 8 characters with letters and numbers</p>
-                        </div>
-                        <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2 required">Confirm Password</label>
-                            <div className="relative">
-                                <input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} required value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="form-input w-full pr-12 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Confirm password" />
-                                <span className="password-toggle" onClick={() => setShowConfirmPassword(v => !v)}>
-                                    <i className={showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'}></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </CardSection>
-            </div>
-            {/* Actions below both rows */}
-            <div className="flex flex-col items-center gap-4 mt-6">
-                <div className="flex items-start terms-group">
-                    <input id="terms" type="checkbox" required checked={terms} onChange={e => setTerms(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1" />
-                    <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                        I agree to the <button onClick={() => { navigate('/terms'); }} className="font-medium text-blue-600 hover:text-blue-500">Terms and Conditions</button> and <button onClick={() => { navigate('/privacy'); }} className="font-medium text-blue-600 hover:text-blue-500">Privacy Policy</button>
-                    </label>
-                </div>
-                {errorMsg && (
-                    <div className="error-notification w-full max-w-lg">
-                        <i className="fas fa-exclamation-circle"></i>
-                        <span>{errorMsg}</span>
-                    </div>
-                )}
-                {successMsg && (
-                    <div className="success-notification w-full max-w-lg">
-                        <i className="fas fa-check-circle"></i>
-                        <span>{successMsg}</span>
-                    </div>
-                )}
-                <button type="submit" className="btn-primary w-full max-w-lg py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 text-lg font-semibold transition-all" disabled={loading}>
-                    {loading ? <LoadingSpinner compact /> : 'Create Caregiver Account'}
-                </button>
-                <div className="pt-2 text-center w-full max-w-lg">
-                    <p className="text-sm text-gray-600">
-                        Already have an account?{' '}
-                        <button onClick={() => { navigate('/'); }} className="font-medium text-blue-600 hover:text-blue-500 transition-colors">Sign in</button>
-                    </p>
-                </div>
-            </div>
-        </form>
+        // Adjusted Box: removed minHeight, alignItems, justifyContent
+        <Box sx={{ display: 'flex', py: 1, background: 'linear-gradient(to bottom right, #e3f2fd, #e8eaf6)' }}>
+            <Container maxWidth="lg"> {/* Changed from lg to md */}
+                <Paper elevation={6} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 4 }}>
+                    <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ fontWeight: 700, mb: 4, color: 'primary.main' }}>
+                        Create Your Account
+                    </Typography>
+                    
+                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                        <Stack spacing={4}>
+                            {/* Row 1: Caregiver & Person */}
+                            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
+                                <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+                                    <CardSection title="Your Information (Caregiver)">
+                                        <Stack spacing={2.5}>
+                                            <TextField id="fName" label="First Name" variant="outlined" required fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} error={!!errors.firstName} helperText={errors.firstName} />
+                                            <TextField id="lName" label="Last Name" variant="outlined" required fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} error={!!errors.lastName} helperText={errors.lastName} />
+                                            <TextField id="pNumber" label="Phone Number" variant="outlined" required fullWidth type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="11 digits (e.g., 09xxxxxxxxx)" inputProps={{ maxLength: 11 }} error={!!errors.phoneNumber} helperText={errors.phoneNumber || "Required"} />
+                                            <TextField id="email" label="Email" variant="outlined" required fullWidth type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={!!errors.email} helperText={errors.email || "Required"} />
+                                        </Stack>
+                                    </CardSection>
+                                </Box>
+                                <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+                                    <CardSection title="Person You'll Monitor">
+                                        <Stack spacing={2.5}>
+                                            <TextField id="userFullName" label="Full Name" variant="outlined" required fullWidth value={userFullName} onChange={(e) => setUserFullName(e.target.value)} error={!!errors.userFullName} helperText={errors.userFullName} />
+                                            <TextField id="userPhoneNumber" label="Phone Number (Optional)" variant="outlined" fullWidth type="tel" value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="11 digits (if applicable)" inputProps={{ maxLength: 11 }} helperText={errors.userPhoneNumber || "Leave blank if none"} error={!!errors.userPhoneNumber} />
+                                            <TextField id="userAge" label="Age" variant="outlined" required fullWidth type="number" value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="e.g., 65" inputProps={{ min: 1, max: 120 }} error={!!errors.userAge} helperText={errors.userAge || "Age 1-120"} />
+                                            <FormControl fullWidth required variant="outlined" error={!!errors.impairmentLevel}>
+                                                <InputLabel id="impairmentLevel-label">Impairment Level</InputLabel>
+                                                <Select labelId="impairmentLevel-label" id="impairmentLevel" value={impairmentLevel} onChange={(e: SelectChangeEvent) => setImpairmentLevel(e.target.value)} label="Impairment Level">
+                                                    <MenuItem value="" disabled><em>Select impairment level</em></MenuItem>
+                                                    {impairmentOptions.map(opt => (<MenuItem key={opt} value={opt}>{opt}</MenuItem>))}
+                                                </Select>
+                                                {errors.impairmentLevel && <FormHelperText>{errors.impairmentLevel}</FormHelperText>}
+                                            </FormControl>
+                                        </Stack>
+                                    </CardSection>
+                                </Box>
+                            </Stack>
+
+                            {/* Row 2: Relationship & Security */}
+                            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
+                                <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+                                    <CardSection title="Relationship & Device">
+                                        <Stack spacing={2.5}>
+                                            <FormControl fullWidth required variant="outlined" error={!!errors.relationship}>
+                                                <InputLabel id="relationship-label">Relationship to Person</InputLabel>
+                                                <Select labelId="relationship-label" id="relationship" value={relationship} onChange={(e: SelectChangeEvent) => setRelationship(e.target.value)} label="Relationship to Person">
+                                                    <MenuItem value="" disabled><em>Select relationship</em></MenuItem>
+                                                    {relationshipOptions.map(opt => (<MenuItem key={opt} value={opt}>{opt}</MenuItem>))}
+                                                </Select>
+                                                {errors.relationship && <FormHelperText>{errors.relationship}</FormHelperText>}
+                                            </FormControl>
+                                            {relationship === 'Other' && (
+                                                <TextField id="otherRelationship" label="Specify Relationship" variant="outlined" fullWidth value={otherRelationship} onChange={(e) => setOtherRelationship(e.target.value)} placeholder="Please specify" required error={!!errors.otherRelationship} helperText={errors.otherRelationship} />
+                                            )}
+                                            <TextField id="serialNumber" label="Device Serial Number" variant="outlined" required fullWidth value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} placeholder="Found on the tracking device" helperText={errors.serialNumber || "Unique serial number on the device"} error={!!errors.serialNumber} />
+                                        </Stack>
+                                    </CardSection>
+                                </Box>
+                                <Box sx={{ width: { xs: '100%', md: '50%' } }}>
+                                    <CardSection title="Security">
+                                        <Stack spacing={2.5}>
+                                            <TextField id="password" label="Create Password" variant="outlined" required fullWidth type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 8 characters" error={!!errors.password} helperText={errors.password || "Min. 8 characters with letters & numbers"} InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>), }} />
+                                            <TextField id="confirmPassword" label="Confirm Password" variant="outlined" required fullWidth type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" error={!!errors.confirmPassword} helperText={errors.confirmPassword || ""} InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowConfirmPassword} onMouseDown={handleMouseDownPassword} edge="end">{showConfirmPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>), }} />
+                                        </Stack>
+                                    </CardSection>
+                                </Box>
+                            </Stack>
+                        </Stack>
+
+                        {/* Actions */}
+                        <Stack spacing={2} alignItems="center" sx={{ mt: 4 }}>
+                            <FormControl error={!!errors.terms}>
+                                <FormControlLabel
+                                    control={<Checkbox id="terms" checked={terms} onChange={(e) => setTerms(e.target.checked)} required color="primary" />}
+                                    label={<Typography variant="body2"> I agree to the{' '} <Link component="button" type="button" variant="body2" onClick={handleGoToTerms}> Terms and Conditions </Link>{' '} and{' '} <Link component="button" type="button" variant="body2" onClick={handleGoToPrivacy}> Privacy Policy </Link> </Typography>}
+                                    sx={{ alignItems: 'center' }}
+                                />
+                                {errors.terms && <FormHelperText sx={{ textAlign: 'center' }}>{errors.terms}</FormHelperText>}
+                            </FormControl>
+
+                            {errorMsg && ( <Alert severity="error" icon={<ErrorIcon fontSize="inherit" />} sx={{ width: '100%', maxWidth: 'sm' }}> {errorMsg} </Alert> )}
+                            {successMsg && ( <Alert severity="success" icon={<CheckCircleIcon fontSize="inherit" />} sx={{ width: '100%', maxWidth: 'sm' }}> {successMsg} </Alert> )}
+
+                            <Button type="submit" variant="contained" color="primary" disabled={loading || !terms} size="large" sx={{ width: '100%', maxWidth: 'sm', py: 1.5, textTransform: 'none', fontSize: '1.1rem', fontWeight: 600 }} startIcon={loading ? <CircularProgress size={24} color="inherit" /> : null}>
+                                {loading ? 'Creating Account...' : 'Create Caregiver Account'}
+                            </Button>
+
+                            <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
+                                Already have an account?{' '}
+                                <Link component="button" type="button" variant="body2" onClick={handleGoToLogin}>
+                                    Sign in
+                                </Link>
+                            </Typography>
+                        </Stack>
+                    </Box>
+                </Paper>
+            </Container>
+        </Box>
     );
 };
 
 export default RegisterForm;
+

@@ -1,26 +1,23 @@
-import React, { useEffect, useState, useContext } from 'react'; // Added useContext
+import React, { useEffect, useContext } from 'react'; // useState removed
 // import Header from '../components/Header'; // Header is removed from here
 import AccountThreePanelLayout from '../components/AccountThreePanelLayout';
-import { useNavigate } from 'react-router-dom';
+// Removed unused useNavigate import
 import { UserContext } from './Profile'; // Import UserContext if needed for user data
 
 const ProfileDesktopPage: React.FC = () => {
   // Use user from context instead of fetching locally if MainLayout provides it
   const { user, setUser } = useContext(UserContext); 
-  const navigate = useNavigate();
+  // Removed unused variable 'navigate'
   // isDesktop check might be redundant if Profile.tsx already handles mobile/desktop split
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 430); 
+  // Removed unused variable 'isDesktop' and its setter
 
   // Removed local fetchUser useEffect - assuming user comes from context via Profile.tsx parent
 
-  const handleNavigate = (path: string) => {
-    navigate(path);
-  };
+  // Removed unused function 'handleNavigate'
 
   useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth > 430);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+  // Removed unused setIsDesktop in handleResize
+  // Removed unused handleResize references
   }, []);
 
   // Removed isDesktop check if Profile.tsx handles the switch

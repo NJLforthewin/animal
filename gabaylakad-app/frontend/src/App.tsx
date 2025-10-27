@@ -3,13 +3,12 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import ProfilePage from './pages/Profile';
 import HistoryPage from './pages/History';
 import LocationPage from './pages/Location';
 import Sensor from './pages/Sensor';
 import Verify from './pages/Verify';
-
+import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import EditProfile from './pages/EditProfile';
@@ -42,7 +41,6 @@ const App: React.FC = () => {
         <ErrorBoundary>
             <Router>
                 <Routes>
-                    {/* Auth and public routes (no persistent layout) */}
                     <Route path="/" element={<Login />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
@@ -50,7 +48,6 @@ const App: React.FC = () => {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/verify" element={<Verify />} />
                     <Route path="/edit-profile" element={<EditProfile />} />
-                    {/* Main app layout (persistent header/sidebar) */}
                     <Route element={<MainLayout />}>
                         <Route path="/dashboard" element={<Dashboard sidebarExpanded={sidebarExpanded} setSidebarExpanded={setSidebarExpanded} />} />
                         <Route path="/profile" element={<ProfilePage />} />

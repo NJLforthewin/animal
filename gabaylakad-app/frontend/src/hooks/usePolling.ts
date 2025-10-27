@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export function usePolling(callback: () => void, interval: number) {
   const savedCallback = useRef<() => void>();
