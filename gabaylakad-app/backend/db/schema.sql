@@ -232,111 +232,128 @@ CREATE TABLE IF NOT EXISTS activity_log (
 ) ENGINE=InnoDB AUTO_INCREMENT=1417 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
--- Helpful view: unify gps_tracking + location_log (if still useful)
--- ----------------------------------------------------
-CREATE OR REPLACE VIEW location_logs_view AS
-  SELECT device_id, latitude, longitude, timestamp, created_at FROM gps_tracking
-  UNION ALL
-  SELECT device_id, latitude, longitude, timestamp, created_at FROM location_log;
+DROP TABLE IF EXISTS `location_logs_view`;
+/*!50001 DROP VIEW IF EXISTS `location_logs_view`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `location_logs_view` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `latitude`,
+ 1 AS `longitude`,
+ 1 AS `timestamp`,
+ 1 AS `created_at`*/;
+SET character_set_client = @saved_cs_client;
 
 -- ----------------------------------------------------
 -- Dashboard aggregation views (latest-per-device)
 -- ----------------------------------------------------
-CREATE OR REPLACE VIEW dashboard_battery_latest AS
-SELECT bs.device_id, bs.battery_level, bs.timestamp
-FROM battery_status bs
-INNER JOIN (
-  SELECT device_id, MAX(timestamp) AS max_ts
-  FROM battery_status
-  GROUP BY device_id
-) latest ON bs.device_id = latest.device_id AND bs.timestamp = latest.max_ts;
+DROP TABLE IF EXISTS `dashboard_battery_latest`;
+/*!50001 DROP VIEW IF EXISTS `dashboard_battery_latest`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `dashboard_battery_latest` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `battery_level`,
+ 1 AS `timestamp`*/;
+SET character_set_client = @saved_cs_client;
 
-CREATE OR REPLACE VIEW dashboard_sensor_latest AS
-SELECT sl.device_id, sl.sensor_type, sl.sensor_value, sl.timestamp
-FROM sensor_log sl
-INNER JOIN (
-  SELECT device_id, MAX(timestamp) AS max_ts
-  FROM sensor_log
-  GROUP BY device_id
-) latest ON sl.device_id = latest.device_id AND sl.timestamp = latest.max_ts;
+DROP TABLE IF EXISTS `dashboard_sensor_latest`;
+/*!50001 DROP VIEW IF EXISTS `dashboard_sensor_latest`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `dashboard_sensor_latest` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `sensor_type`,
+ 1 AS `sensor_value`,
+ 1 AS `timestamp`*/;
+SET character_set_client = @saved_cs_client;
 
-CREATE OR REPLACE VIEW dashboard_location_latest AS
-SELECT ll.device_id, ll.latitude, ll.longitude, ll.timestamp,
-  ll.street_name, ll.city_name, ll.place_name, ll.context_tag,
-  ll.poi_name, ll.poi_type, ll.poi_distance,
-  ll.poi_distance_m, ll.poi_distance_km, ll.poi_lat, ll.poi_lon
-FROM location_log ll
-INNER JOIN (
-  SELECT device_id, MAX(timestamp) AS max_ts
-  FROM location_log
-  GROUP BY device_id
-) latest ON ll.device_id = latest.device_id AND ll.timestamp = latest.max_ts;
+DROP TABLE IF EXISTS `dashboard_location_latest`;
+/*!50001 DROP VIEW IF EXISTS `dashboard_location_latest`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `dashboard_location_latest` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `latitude`,
+ 1 AS `longitude`,
+ 1 AS `altitude`,
+ 1 AS `speed`,
+ 1 AS `heading`,
+ 1 AS `accuracy`,
+ 1 AS `signal_strength`,
+ 1 AS `timestamp`,
+ 1 AS `street_name`,
+ 1 AS `city_name`,
+ 1 AS `place_name`,
+ 1 AS `context_tag`,
+ 1 AS `poi_name`,
+ 1 AS `poi_type`,
+ 1 AS `poi_distance`,
+ 1 AS `poi_distance_m`,
+ 1 AS `poi_distance_km`,
+ 1 AS `poi_lat`,
+ 1 AS `poi_lon`*/;
+SET character_set_client = @saved_cs_client;
 
-CREATE OR REPLACE VIEW dashboard_reflector_latest AS
-SELECT nr.device_id, nr.status, nr.timestamp
-FROM night_reflector_status nr
-INNER JOIN (
-  SELECT device_id, MAX(timestamp) AS max_ts
-  FROM night_reflector_status
-  GROUP BY device_id
-) latest ON nr.device_id = latest.device_id AND nr.timestamp = latest.max_ts;
+DROP TABLE IF EXISTS `dashboard_reflector_latest`;
+/*!50001 DROP VIEW IF EXISTS `dashboard_reflector_latest`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `dashboard_reflector_latest` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `status`,
+ 1 AS `timestamp`*/;
+SET character_set_client = @saved_cs_client;
 
-CREATE OR REPLACE VIEW dashboard_activity_latest AS
-SELECT a.device_id, a.event_type AS last_activity, a.timestamp
-FROM activity_log a
-INNER JOIN (
-  SELECT device_id, MAX(timestamp) AS max_ts
-  FROM activity_log
-  GROUP BY device_id
-) latest ON a.device_id = latest.device_id AND a.timestamp = latest.max_ts;
+DROP TABLE IF EXISTS `dashboard_activity_latest`;
+/*!50001 DROP VIEW IF EXISTS `dashboard_activity_latest`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `dashboard_activity_latest` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `last_activity`,
+ 1 AS `timestamp`*/;
+SET character_set_client = @saved_cs_client;
 
 -- Consolidated view showing latest info per device
-CREATE OR REPLACE VIEW dashboard_latest AS
-SELECT
-  d.device_id,
-  d.serial_number,
-  b.battery_level,
-  b.timestamp AS battery_timestamp,
-  s.sensor_type,
-  s.sensor_value,
-  s.timestamp AS sensor_timestamp,
-  l.latitude,
-  l.longitude,
-  l.altitude,
-  l.speed,
-  l.accuracy,
-  l.signal_strength,
-  l.street_name,
-  l.city_name,
-  l.place_name,
-  l.context_tag,
-  l.poi_name,
-  l.poi_type,
-  l.poi_distance,
-  l.poi_distance_m,
-  l.poi_distance_km,
-  l.poi_lat,
-  l.poi_lon,
-  l.timestamp AS location_timestamp,
-  r.status AS reflector_status,
-  r.timestamp AS reflector_timestamp,
-  a.alert_type,
-  a.timestamp AS alert_timestamp,
-  act.last_activity,
-  act.timestamp AS activity_timestamp
-FROM device d
-LEFT JOIN dashboard_battery_latest b ON b.device_id = d.device_id
-LEFT JOIN dashboard_sensor_latest s ON s.device_id = d.device_id
-LEFT JOIN dashboard_location_latest l ON l.device_id = d.device_id
-LEFT JOIN dashboard_reflector_latest r ON r.device_id = d.device_id
-LEFT JOIN (
-    SELECT aa1.device_id, aa1.alert_type, aa1.timestamp
-    FROM alert aa1
-    INNER JOIN (
-      SELECT device_id, MAX(timestamp) AS max_ts FROM alert GROUP BY device_id
-    ) aa2 ON aa1.device_id = aa2.device_id AND aa1.timestamp = aa2.max_ts
-) a ON a.device_id = d.device_id
-LEFT JOIN dashboard_activity_latest act ON act.device_id = d.device_id;
+DROP TABLE IF EXISTS `dashboard_latest`;
+/*!50001 DROP VIEW IF EXISTS `dashboard_latest`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `dashboard_latest` AS SELECT
+ 1 AS `device_id`,
+ 1 AS `serial_number`,
+ 1 AS `battery_level`,
+ 1 AS `battery_timestamp`,
+ 1 AS `sensor_type`,
+ 1 AS `sensor_value`,
+ 1 AS `sensor_timestamp`,
+ 1 AS `latitude`,
+ 1 AS `longitude`,
+ 1 AS `altitude`,
+ 1 AS `speed`,
+ 1 AS `heading`,
+ 1 AS `accuracy`,
+ 1 AS `signal_strength`,
+ 1 AS `street_name`,
+ 1 AS `city_name`,
+ 1 AS `place_name`,
+ 1 AS `context_tag`,
+ 1 AS `poi_name`,
+ 1 AS `poi_type`,
+ 1 AS `poi_distance`,
+ 1 AS `poi_distance_m`,
+ 1 AS `poi_distance_km`,
+ 1 AS `poi_lat`,
+ 1 AS `poi_lon`,
+ 1 AS `location_timestamp`,
+ 1 AS `reflector_status`,
+ 1 AS `reflector_timestamp`,
+ 1 AS `alert_type`,
+ 1 AS `alert_timestamp`,
+ 1 AS `last_activity`,
+ 1 AS `activity_timestamp`*/;
+SET character_set_client = @saved_cs_client;
 
 -- ----------------------------------------------------
 -- Index housekeeping (additional helpful indexes)
