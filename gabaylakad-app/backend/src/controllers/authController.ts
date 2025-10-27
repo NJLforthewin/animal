@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response) => {
         const rows = Array.isArray(result.rows) ? result.rows : [];
         console.log('[LOGIN] DB user lookup result:', rows);
         const user = rows[0] as any;
-        if (!user) {
+            if (!user) {
             const msg = '[LOGIN] User not found for email: ' + email;
             console.warn(msg);
             res.setHeader('X-Login-Error', msg);
@@ -105,6 +105,7 @@ export const login = async (req: Request, res: Response) => {
             res.setHeader('X-Login-Error', msg);
             return res.status(401).json({ message: 'Incorrect password!', token: null });
         }
+            console.log(`[LOGIN SUCCESS] User ${user.user_id} (${user.email}) logged in at ${new Date().toISOString()}`);
         const token = jwt.sign({ userId: user.user_id, email: user.email }, process.env.JWT_SECRET || 'your_secret_key', { expiresIn: '10m' });
         const refreshToken = generateRefreshToken();
         // Save refresh token in DB
@@ -179,15 +180,22 @@ export const register = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Please fill in all required fields' });
     }
     try {
-        // Check if device with this serial number already exists
+        // Check if device with this serial number exists
         const deviceRes = await query('SELECT device_id FROM device WHERE serial_number = ?', [serial_number]);
         const deviceRows = Array.isArray(deviceRes.rows) ? (deviceRes.rows as any[]) : [];
         let device_id;
         if (deviceRows.length > 0) {
-            // Serial number already exists, fail registration
-            return res.status(409).json({ message: 'Device serial number already exists. Please check your device or use a different serial number.' });
+            // Device exists, check if assigned to a user
+            const deviceId = deviceRows[0].device_id;
+            const userRes = await query('SELECT user_id FROM user WHERE device_id = ?', [deviceId]);
+            const userRows = Array.isArray(userRes.rows) ? (userRes.rows as any[]) : [];
+            if (userRows.length > 0) {
+                // Device is already assigned
+                return res.status(409).json({ message: 'Device serial number is already assigned to another user. Please use a different device.' });
+            }
+            device_id = deviceId;
         } else {
-            // Insert device and get device_id
+            // Device does not exist, create it
             const deviceResult: any = await query('INSERT INTO device (serial_number, is_active) VALUES (?, ?)', [serial_number, 1]);
             device_id = deviceResult.insertId;
         }

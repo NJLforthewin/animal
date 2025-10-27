@@ -1,7 +1,34 @@
-
 import React, { useState } from 'react';
-import BaseModal from './BaseModal';
-import { ChangePasswordForm } from './PreferencesSection';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stack,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  IconButton,
+  FormControlLabel,
+  Switch,
+  Alert,
+  Paper,
+  Typography,
+  CircularProgress,
+} from '@mui/material';
+
+// Import MUI Icons
+import KeyIcon from '@mui/icons-material/Key';
+import ShieldIcon from '@mui/icons-material/Shield';
+import HistoryIcon from '@mui/icons-material/History';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CloseIcon from '@mui/icons-material/Close';
+
+// Assuming this is a custom component, we import it
+// It should ideally be styled with MUI as well
+import { ChangePasswordForm } from './PreferencesSection'; 
 
 interface LoginActivity {
   device: string;
@@ -22,6 +49,7 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose }) => {
 
   // 2FA state
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  
   // Login activity (mock data)
   const [loginActivity, setLoginActivity] = useState<LoginActivity[]>([
     { device: 'iPhone 13', browser: 'Safari', timestamp: '2025-10-18 09:12' },
@@ -30,21 +58,37 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose }) => {
   ]);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // Modal navigation items
+  // Close all sub-modals and call the main onClose
+  const handleCloseAll = () => {
+    setShowChangePassword(false);
+    setShow2FA(false);
+    setShowLoginActivity(false);
+    onClose(); // Close the main modal
+  };
+
+  const handleLogoutAll = () => {
+    setLoggingOut(true);
+    setTimeout(() => {
+      setLoginActivity([]);
+      setLoggingOut(false);
+    }, 1200);
+  };
+
+  // Navigation items
   const modalNav = [
     {
       label: 'Change Password',
-      icon: 'fas fa-key',
+      icon: <KeyIcon />,
       onClick: () => setShowChangePassword(true),
     },
     {
       label: 'Two-Factor Authentication (2FA)',
-      icon: 'fas fa-shield-alt',
+      icon: <ShieldIcon />,
       onClick: () => setShow2FA(true),
     },
     {
       label: 'Login Activity',
-      icon: 'fas fa-history',
+      icon: <HistoryIcon />,
       onClick: () => setShowLoginActivity(true),
     },
   ];
@@ -52,61 +96,114 @@ const SecurityModal: React.FC<SecurityModalProps> = ({ open, onClose }) => {
   return (
     <>
       {/* Main Security Modal */}
-      <BaseModal open={open && !showChangePassword && !show2FA && !showLoginActivity} onClose={onClose} title="Security">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {modalNav.map((item, idx) => (
-            <button key={item.label} type="button" onClick={item.onClick} style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(41,128,185,0.08)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#232946', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s' }}>
-              <i className={item.icon} aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#2980b9' }}></i>
-              <span>{item.label}</span>
-              <i className="fas fa-chevron-right" style={{ marginLeft: 'auto', color: '#232946', fontSize: '1.08rem' }}></i>
-            </button>
-          ))}
-        </div>
-      </BaseModal>
+      <Dialog
+        open={open && !showChangePassword && !show2FA && !showLoginActivity}
+        onClose={handleCloseAll}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Security
+          <IconButton onClick={handleCloseAll} aria-label="Close">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <List component="nav">
+            {modalNav.map((item) => (
+              <ListItemButton key={item.label} onClick={item.onClick} sx={{ borderRadius: 2, mb: 1 }}>
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+                <ChevronRightIcon />
+              </ListItemButton>
+            ))}
+          </List>
+        </DialogContent>
+      </Dialog>
 
       {/* Change Password Submodal */}
-      <BaseModal open={showChangePassword} onClose={() => setShowChangePassword(false)} title="Change Password">
-        <ChangePasswordForm onClose={() => setShowChangePassword(false)} />
-      </BaseModal>
+      <Dialog open={showChangePassword} onClose={() => setShowChangePassword(false)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Change Password
+          <IconButton onClick={() => setShowChangePassword(false)} aria-label="Close">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {/* Assuming ChangePasswordForm handles its own content and actions */}
+          <ChangePasswordForm onClose={() => setShowChangePassword(false)} />
+        </DialogContent>
+      </Dialog>
 
       {/* 2FA Submodal */}
-      <BaseModal open={show2FA} onClose={() => setShow2FA(false)} title="Two-Factor Authentication (2FA)">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 12, fontWeight: 600, fontSize: '1rem', marginBottom: 8 }}>
-            <input type="checkbox" checked={twoFAEnabled} onChange={e => setTwoFAEnabled(e.target.checked)} style={{ accentColor: '#2980b9', width: 22, height: 22 }} />
-            Enable 2FA
-          </label>
-          {twoFAEnabled ? (
-            <div style={{ fontSize: '0.98rem', color: '#232946', background: '#f7f7f7', borderRadius: 8, padding: '0.7rem 1rem', marginTop: 6 }}>
-              2FA enabled via Authenticator App.
-            </div>
-          ) : (
-            <div style={{ fontSize: '0.98rem', color: '#7f8c8d', background: '#f7f7f7', borderRadius: 8, padding: '0.7rem 1rem', marginTop: 6 }}>
-              2FA is currently turned off.
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
-            <button type="button" style={{ background: '#232946', color: '#fff', border: 'none', borderRadius: 10, padding: '0.7rem 2.2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => setShow2FA(false)}>Save Changes</button>
-            <button type="button" style={{ background: '#e0e6ed', color: '#232946', border: 'none', borderRadius: 10, padding: '0.7rem 2.2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => setShow2FA(false)}>Cancel</button>
-          </div>
-        </div>
-      </BaseModal>
+      <Dialog open={show2FA} onClose={() => setShow2FA(false)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Two-Factor Authentication
+          <IconButton onClick={() => setShow2FA(false)} aria-label="Close">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <FormControlLabel
+              control={<Switch checked={twoFAEnabled} onChange={e => setTwoFAEnabled(e.target.checked)} />}
+              label="Enable 2FA"
+            />
+            <Alert severity={twoFAEnabled ? "success" : "warning"}>
+              {twoFAEnabled
+                ? "2FA enabled via Authenticator App."
+                : "2FA is currently turned off. We strongly recommend enabling it."}
+            </Alert>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShow2FA(false)} color="inherit">Cancel</Button>
+          <Button onClick={() => setShow2FA(false)} variant="contained">Save Changes</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Login Activity Submodal */}
-      <BaseModal open={showLoginActivity} onClose={() => setShowLoginActivity(false)} title="Login Activity">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {loginActivity.map((item, idx) => (
-            <div key={idx} style={{ background: '#f7f7f7', borderRadius: 8, padding: '0.7rem 1rem', fontSize: '0.98rem', color: '#232946', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span><b>Device:</b> {item.device}</span>
-              <span><b>Browser:</b> {item.browser}</span>
-              <span><b>Time:</b> {item.timestamp}</span>
-            </div>
-          ))}
-        </div>
-        <button type="button" style={{ marginTop: 14, background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.1rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer', width: '100%' }} disabled={loggingOut} onClick={() => { setLoggingOut(true); setTimeout(() => { setLoginActivity([]); setLoggingOut(false); }, 1200); }}>
-          {loggingOut ? 'Logging out...' : 'Log out of all devices'}
-        </button>
-      </BaseModal>
+      <Dialog open={showLoginActivity} onClose={() => setShowLoginActivity(false)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Login Activity
+          <IconButton onClick={() => setShowLoginActivity(false)} aria-label="Close">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pt: 1 }}>
+            {loginActivity.length > 0 ? (
+              loginActivity.map((item, idx) => (
+                <Paper key={idx} variant="outlined" sx={{ p: 1.5, borderRadius: 2 }}>
+                  <Typography variant="body2">
+                    <b>Device:</b> {item.device}
+                  </Typography>
+                  <Typography variant="body2">
+                    <b>Browser:</b> {item.browser}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.timestamp}
+                  </Typography>
+                </Paper>
+              ))
+            ) : (
+              <Alert severity="info">You are not logged in on any other devices.</Alert>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            variant="contained"
+            color="error"
+            fullWidth
+            disabled={loggingOut || loginActivity.length === 0}
+            onClick={handleLogoutAll}
+            startIcon={loggingOut ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {loggingOut ? 'Logging out...' : 'Log out of all devices'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

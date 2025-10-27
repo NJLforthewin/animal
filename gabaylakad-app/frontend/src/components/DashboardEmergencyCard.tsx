@@ -4,7 +4,9 @@ import useIsMobile from './useIsMobile';
 import MobileView from './MobileView';
 import MobileEmergency from './MobileEmergency';
 import LoadingValue from './LoadingValue';
-import '../styles/dashboard-desktop-card.css';
+// import '../styles/dashboard-desktop-card.css'; // Removed
+import { Paper, Stack, Typography } from '@mui/material';
+import WarningIcon from '@mui/icons-material/Warning'; // Icon for emergency
 
 const fetchEmergency = async () => {
   const res = await fetch('/api/dashboard/emergency', {
@@ -60,29 +62,44 @@ const DashboardEmergencyCard: React.FC = () => {
         <MobileEmergency status={status} triggerType={triggerType} loading={loading} />
       </MobileView>
       {isMobile ? null : (
-        <div className="dashboard-desktop-card desktop-card-pos">
-          <div>
-            <div className="card-title-row">
-              <div className="card-title">EMERGENCY</div>
-              <div className="card-icon" aria-hidden>
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2V7h2v7z"/></svg>
-              </div>
-            </div>
-            <div className="field-row">
-              <div className="field-label">Status</div>
-              <LoadingValue loading={loading} value={status} className="field-value" title={String(status)} />
-            </div>
-            <div className="field-row">
-              <div className="field-label">Trigger</div>
-              <LoadingValue loading={loading} value={triggerType} className="field-value" title={String(triggerType)} />
-            </div>
-          </div>
-        </div>
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            height: 180, 
+        minHeight: 180, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between' 
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="600" color="text.secondary">
+              EMERGENCY
+            </Typography>
+            <WarningIcon color="error" />
+          </Stack>
+          <Stack spacing={0.5}>
+            <Typography variant="caption" color="text.secondary">
+              Status
+            </Typography>
+            <Typography variant="h6" fontWeight="600" noWrap title={String(status)} component="span">
+              <LoadingValue loading={loading} value={status} />
+            </Typography>
+          </Stack>
+          <Stack spacing={0.5} sx={{ mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Trigger
+            </Typography>
+            <Typography variant="body2" noWrap title={String(triggerType)} component="span">
+              <LoadingValue loading={loading} value={triggerType} />
+            </Typography>
+          </Stack>
+        </Paper>
       )}
     </DashboardCardBoundary>
   );
 };
 
 export default DashboardEmergencyCard;
-
-// EmergencyModal removed: mobile view no longer shows an inline modal

@@ -13,6 +13,7 @@ import batteryRoutes from './routes/batteryRoutes';
 import reflectorRoutes from './routes/reflectorRoutes';
 import locationRoutes from './routes/locationRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
+import sensorRoutes from './routes/sensorRoutes';
 const app = express();
 // Only allow frontend origin for Socket.IO and REST
 const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
@@ -71,6 +72,7 @@ app.use('/api/batteries', batteryRoutes);
 app.use('/api/reflectors', reflectorRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard/sensor', sensorRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'API is running' });

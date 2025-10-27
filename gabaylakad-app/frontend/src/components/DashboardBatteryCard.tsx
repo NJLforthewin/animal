@@ -4,7 +4,9 @@ import useIsMobile from './useIsMobile';
 import MobileView from './MobileView';
 import MobileBattery from './MobileBattery';
 import LoadingValue from './LoadingValue';
-import '../styles/dashboard-desktop-card.css';
+// import '../styles/dashboard-desktop-card.css'; // Removed
+import { Paper, Stack, Typography } from '@mui/material';
+import BatteryStdIcon from '@mui/icons-material/BatteryStd'; // Icon for battery
 
 const fetchBattery = async () => {
   const res = await fetch('/api/dashboard/battery', {
@@ -60,30 +62,44 @@ const DashboardBatteryCard: React.FC = () => {
         <MobileBattery batteryLevel={level} chargingStatus={updatedAt} loading={loading} />
       </MobileView>
       {isMobile ? null : (
-        <div className="dashboard-desktop-card desktop-card-pos">
-          <div>
-            <div className="card-title-row">
-              <div className="card-title">BATTERY</div>
-              <div className="card-icon" aria-hidden>
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 4v2H8V4H6v2H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-1V4h-2zm3 16H5V8h14v12z"/></svg>
-              </div>
-            </div>
-            <div className="field-row">
-              <div className="field-label">Status</div>
-              <LoadingValue loading={loading} value={level} className="field-value" title={String(level)} />
-            </div>
-            <div className="field-row">
-              <div className="field-label">Timestamp</div>
-              <LoadingValue loading={loading} value={updatedAt} className="field-value" title={String(updatedAt)} />
-            </div>
-          </div>
-        </div>
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            height: 180, 
+        minHeight: 180, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between' 
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="600" color="text.secondary">
+              BATTERY
+            </Typography>
+            <BatteryStdIcon color="action" />
+          </Stack>
+          <Stack spacing={0.5}>
+            <Typography variant="caption" color="text.secondary">
+              Status
+            </Typography>
+            <Typography variant="h6" fontWeight="600" noWrap title={String(level)} component="span">
+              <LoadingValue loading={loading} value={level} />
+            </Typography>
+          </Stack>
+          <Stack spacing={0.5} sx={{ mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Timestamp
+            </Typography>
+            <Typography variant="body2" noWrap title={String(updatedAt)} component="span">
+              <LoadingValue loading={loading} value={updatedAt} />
+            </Typography>
+          </Stack>
+        </Paper>
       )}
     </DashboardCardBoundary>
   );
 };
 
 export default DashboardBatteryCard;
-
-
-// BatteryModal removed: mobile view no longer shows an inline modal

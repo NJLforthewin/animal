@@ -4,14 +4,21 @@
   "private": true,
   "scripts": {
     "start": "react-scripts start",
+    "dev": "npm start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@fortawesome/fontawesome-free": "^7.0.1",
     "@fortawesome/free-solid-svg-icons": "^7.0.1",
     "@fortawesome/react-fontawesome": "^3.0.2",
+    "@mui/icons-material": "^7.3.4",
+    "@mui/material": "^7.3.4",
+    "@mui/system": "^7.3.3",
+    "@types/recharts": "^1.8.29",
     "axios": "^0.21.1",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
@@ -23,11 +30,12 @@
     "react-router-dom": "^7.9.1",
     "react-scripts": "^5.0.1",
     "react-transition-group": "^4.4.5",
+    "recharts": "^3.3.0",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.21",
-    "@types/react": "^17.0.2",
+    "@types/react": "^17.0.89",
     "@types/react-dom": "^17.0.26",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-transition-group": "^4.4.12",

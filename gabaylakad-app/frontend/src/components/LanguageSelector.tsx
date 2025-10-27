@@ -1,4 +1,15 @@
 import React, { useState } from 'react';
+import {
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    SelectChangeEvent,
+    Stack,
+    Typography,
+    Box
+} from '@mui/material';
+import LanguageIcon from '@mui/icons-material/Language';
 
 const languages = [
   { code: 'ceb', name: 'Cebuano' },
@@ -25,39 +36,56 @@ const languages = [
 
 const LanguageSelector: React.FC = () => {
   const [selected, setSelected] = useState('ceb');
-  const [open, setOpen] = useState(false);
+
+  const handleChange = (event: SelectChangeEvent<string>) => {
+    setSelected(event.target.value);
+    // Add logic here to actually change the application language if needed
+    console.log('Language changed to:', event.target.value);
+  };
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <div
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '1.1rem 1.2rem', borderBottom: '1px solid #f7f7f7', fontWeight: 600,
-          color: '#232946', fontSize: '1.08rem', cursor: 'pointer',
+    // Use FormControl for proper label behavior and styling
+    <FormControl fullWidth variant="outlined" sx={{ my: 1 }}>
+       {/* Use InputLabel for accessibility and floating label effect */}
+      <InputLabel id="language-select-label">
+           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+               <LanguageIcon fontSize='small' /> Language
+           </Box>
+      </InputLabel>
+      <Select
+        labelId="language-select-label"
+        id="language-select"
+        value={selected}
+        onChange={handleChange}
+        // Add label prop matching InputLabel for correct layout
+        label={
+           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+               <LanguageIcon fontSize='small' /> Language
+           </Box>
+        }
+        // Customize appearance if needed
+        sx={{
+            '.MuiSelect-select': {
+                display: 'flex',
+                alignItems: 'center',
+            }
         }}
-        onClick={() => setOpen(!open)}
+        // MenuProps can style the dropdown menu itself
+         MenuProps={{
+           PaperProps: {
+             sx: {
+               maxHeight: 300, // Limit dropdown height
+             },
+           },
+         }}
       >
-        <span><i className="fas fa-language" style={{ marginRight: 12, color: '#232946' }}></i>Language</span>
-        <span style={{ color: '#232946', fontSize: '1.08rem', fontWeight: 500 }}>{languages.find(l => l.code === selected)?.name}</span>
-        <i className={`fas fa-chevron-${open ? 'up' : 'down'}`} style={{ color: '#232946', fontSize: '1.1rem', marginLeft: 8 }}></i>
-      </div>
-      {open && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', zIndex: 10, borderRadius: 8, boxShadow: '0 2px 12px rgba(44,62,80,0.08)', maxHeight: 260, overflowY: 'auto' }}>
-          {languages.map(lang => (
-            <div
-              key={lang.code}
-              style={{
-                padding: '0.9rem 1.2rem', fontWeight: 500, color: selected === lang.code ? '#2980b9' : '#232946',
-                background: selected === lang.code ? '#e0e6ed' : 'transparent', cursor: 'pointer',
-              }}
-              onClick={() => { setSelected(lang.code); setOpen(false); }}
-            >
-              {lang.name}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+        {languages.map(lang => (
+          <MenuItem key={lang.code} value={lang.code}>
+            {lang.name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 };
 

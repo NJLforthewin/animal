@@ -1,12 +1,26 @@
+import React from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Stack,
+  Avatar,
+  Typography,
+  IconButton,
+  Box,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close'; // Import CloseIcon
 
-import React, { useState } from 'react';
-
+// Define the props interface
 interface AvatarPickerProps {
   defaultAvatars: string[];
   avatarPreview: string | null;
   setAvatarPreview: (url: string) => void;
   setShowAvatarPicker: (show: boolean) => void;
   onConfirm: () => void;
+  open?: boolean; // Make open optional
 }
 
 const AvatarPicker: React.FC<AvatarPickerProps> = ({
@@ -14,45 +28,108 @@ const AvatarPicker: React.FC<AvatarPickerProps> = ({
   avatarPreview,
   setAvatarPreview,
   setShowAvatarPicker,
-  onConfirm
+  onConfirm,
+  open, // Use 'open' to control the Dialog
 }) => {
+  const handleCancel = () => {
+    setShowAvatarPicker(false);
+    // Note: We might want to reset the preview to the original avatar here
+    // but we'd need the original avatar prop.
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    setShowAvatarPicker(false);
+  };
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-  <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(44,62,80,0.15)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
-        <div style={{ fontWeight: 700, fontSize: '1.15rem', marginBottom: 12 }}>Choose Your Avatar</div>
-        {/* Preview Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: '0.95rem', color: '#232946', marginBottom: 6 }}>Preview</div>
-          <img
-            src={avatarPreview || defaultAvatars[0]}
-            alt="Avatar Preview"
-            style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #2980b9', objectFit: 'cover', marginBottom: 8 }}
-          />
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-          {defaultAvatars.map((url, idx) => (
-            <img
-              key={idx}
-              src={url}
-              alt={`Avatar ${idx+1}`}
-              style={{ width: 64, height: 64, borderRadius: '50%', border: avatarPreview === url ? '3px solid #2980b9' : '2px solid #e0e0e0', cursor: 'pointer', objectFit: 'cover', transition: 'border 0.2s' }}
-              onClick={() => setAvatarPreview(url)}
+    <Dialog
+      open={open ?? false} // Default to false if open is undefined
+      onClose={handleCancel}
+      fullWidth
+      maxWidth="xs"
+      sx={{ zIndex: 10001 }} // Ensure it appears above other modals if needed
+    >
+      {/* FIX: Removed the nested <Typography component="h2">.
+        We apply styling directly to DialogTitle and add a close button.
+      */}
+      <DialogTitle sx={{ m: 0, p: 2, fontWeight: 600 }}>
+        Choose Your Avatar
+        <IconButton
+          aria-label="close"
+          onClick={handleCancel}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      
+      <DialogContent dividers> {/* 'dividers' adds top/bottom borders */}
+        <Stack spacing={3} alignItems="center" sx={{ pt: 1 }}>
+          {/* Preview Section */}
+          <Stack alignItems="center" spacing={1}>
+            <Typography variant="overline" color="text.secondary">
+              Preview
+            </Typography>
+            <Avatar
+              src={avatarPreview || defaultAvatars[0]}
+              alt="Avatar Preview"
+              sx={{
+                width: 80,
+                height: 80,
+                border: '3px solid',
+                borderColor: 'primary.main',
+                objectFit: 'cover',
+              }}
             />
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 12, marginTop: 18 }}>
-          <button
-            style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 2.2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-            onClick={onConfirm}
-          >Confirm</button>
-          <button
-            style={{ background: '#e0e6ed', color: '#232946', border: 'none', borderRadius: 8, padding: '0.7rem 2.2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }}
-            onClick={() => setShowAvatarPicker(false)}
-          >Cancel</button>
-        </div>
-      </div>
-    </div>
+          </Stack>
+
+          {/* Avatar Selection */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2, // Use theme spacing
+              justifyContent: 'center',
+            }}
+          >
+            {defaultAvatars.map((url, idx) => (
+              <IconButton key={idx} onClick={() => setAvatarPreview(url)}>
+                <Avatar
+                  src={url}
+                  alt={`Avatar ${idx + 1}`}
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    border: '3px solid',
+                    borderColor: avatarPreview === url ? 'primary.main' : 'divider',
+                    cursor: 'pointer',
+                    objectFit: 'cover',
+                    transition: 'border-color 0.2s',
+                  }}
+                />
+              </IconButton>
+            ))}
+          </Box>
+        </Stack>
+      </DialogContent>
+      
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={handleCancel} color="inherit">
+          Cancel
+        </Button>
+        <Button onClick={handleConfirm} variant="contained">
+          Confirm
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
 export default AvatarPicker;
+

@@ -1,10 +1,9 @@
 import React, { useEffect, useState, createContext, useContext, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/dashboard-main.css';
-import '../styles/profile.css';
 import '../styles/profile-mobile.css';
 import '../styles/profile-feed-mobile.css';
-import ProfileLeftPanel from './ProfileLeftPanel';
+import ProfileDesktopPage from './ProfileDesktopPage';
 import ProfileMobile from './ProfileMobile';
 
 import useIsMobile from '../components/useIsMobile';
@@ -29,6 +28,7 @@ export interface UserType {
   blind_age?: string;
   impairment_level?: string;
   device_id?: string;
+  phone_number?: string; // Added this field to match your save logic
 }
 
 export const UserContext = createContext<{
@@ -38,6 +38,16 @@ export const UserContext = createContext<{
 
 const Profile: React.FC = () => {
   const isMobile = useIsMobile();
+  useEffect(() => {
+    if (isMobile) {
+      document.body.style.overflow = 'clip';
+      document.documentElement.style.overflow = 'clip';
+      return () => {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+      };
+    }
+  }, [isMobile]);
   const [profile, setProfile] = useState<UserType | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [mobileForm, setMobileForm] = useState<any>({});
@@ -78,19 +88,7 @@ const Profile: React.FC = () => {
 
   // Responsive view switcher with route sync
   useEffect(() => {
-    if (!isMobile && location.pathname === '/profile') {
-      // Mobile → Desktop: redirect to dashboard and open modal
-      navigate('/dashboard', { replace: true });
-      setTimeout(() => {
-        window.dispatchEvent(new Event('openProfileDesktopModal'));
-      }, 10);
-    } else if (isMobile && location.pathname !== '/profile') {
-      // Only redirect if not already on profile
-      if (location.pathname !== '/profile') {
-        navigate('/profile', { replace: true });
-      }
-    }
-    // eslint-disable-next-line
+    // No longer need to redirect for desktop
   }, [isMobile]);
 
   return (
@@ -103,12 +101,8 @@ const Profile: React.FC = () => {
           ...(isMobile ? { overflow: 'hidden' } : {}),
         }}
       >
-        {/* Left panel (desktop header) */}
-        {!isMobile && <ProfileLeftPanel user={profile} />}
-        {/* Fade transition wrapper */}
-        <div ref={fadeRef} style={{ transition: 'opacity 0.22s', opacity: 1 }}>
-          {/* Mobile view: ProfileMobile always rendered on /profile route */}
-          {isMobile && (
+        {isMobile ? (
+          <div ref={fadeRef} style={{ transition: 'opacity 0.22s', opacity: 1 }}>
             <ProfileMobile
               profile={profile}
               editMode={editMode}
@@ -127,33 +121,48 @@ const Profile: React.FC = () => {
                 setLoading(true);
                 setErrorMsg('');
                 try {
-                  const avatarToSend = localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar;
+                  
+                  // --- THIS IS THE FIX ---
+
+                  // 1. Create the new profile object *before* sending
+                  const newProfileData: UserType = {
+                    ...profile, // Start with existing profile data
+                    // Add all form fields
+                    first_name: mobileForm.first_name || '',
+                    last_name: mobileForm.last_name || '',
+                    email: mobileForm.email || '',
+                    phone_number: mobileForm.phone || '',
+                    // Add the new avatar (use avatarPreview if it's set, else keep the old one)
+                    avatar: avatarPreview !== null ? avatarPreview : profile?.avatar,
+                    
+                    // Keep non-editable fields from the original profile
+                    relationship: profile?.relationship || '',
+                    blind_full_name: profile?.blind_full_name || '',
+                    blind_phone_number: profile?.blind_phone_number || '',
+                    blind_age: profile?.blind_age || '',
+                    impairment_level: profile?.impairment_level || '',
+                    device_id: profile?.device_id || '',
+                  };
+
+                  // 2. Send the new object to the server
                   await fetch('/api/profile', {
                     method: 'PUT',
                     headers: {
                       Authorization: `Bearer ${sessionStorage.getItem('token')}`,
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                      first_name: mobileForm.first_name || '',
-                      last_name: mobileForm.last_name || '',
-                      email: mobileForm.email || '',
-                      phone_number: mobileForm.phone || '',
-                      relationship: profile?.relationship || '',
-                      blind_full_name: profile?.blind_full_name || '',
-                      blind_phone_number: profile?.blind_phone_number || '',
-                      blind_age: profile?.blind_age || '',
-                      impairment_level: profile?.impairment_level || '',
-                      device_id: profile?.device_id || '',
-                      avatar: avatarToSend,
-                    }),
+                    body: JSON.stringify(newProfileData), // Send the complete new object
                   });
-                  await fetchProfile();
-                  setUser(profile);
-                  setAvatarPreview(localMobileAvatarPreview || originalAvatar || avatarPreview || profile?.avatar || '');
+
+                  // 3. Manually update all states. Do NOT refetch.
+                  setProfile(newProfileData); // Update local profile
+                  setUser(newProfileData);   // Update global context
+                  
+                  // --- END OF FIX ---
+
                   setEditMode(false);
-                  setLocalMobileAvatarPreview(null);
-                  setOriginalAvatar(null);
+                  setLocalMobileAvatarPreview(null); // Reset this state as in original code
+                  setOriginalAvatar(null); // Reset this state as in original code
                   if (closeModal) closeModal();
                 } catch (err) {
                   console.error(err);
@@ -164,8 +173,10 @@ const Profile: React.FC = () => {
               originalAvatar={originalAvatar}
               fetchProfile={fetchProfile}
             />
-          )}
-        </div>
+          </div>
+        ) : (
+          <ProfileDesktopPage />
+        )}
       </div>
     </UserContext.Provider>
   );

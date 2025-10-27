@@ -3,8 +3,7 @@ import useIsMobile from './useIsMobile';
 
 const MobileView: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children }) => {
   const isMobile = useIsMobile();
-  if (!isMobile) return null;
-  return <>{children}</>;
+  return isMobile ? <>{children}</> : null;
 };
 
 export default MobileView;

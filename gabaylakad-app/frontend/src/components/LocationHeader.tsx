@@ -59,12 +59,13 @@ const LocationHeader: React.FC<LocationHeaderProps> = ({ user }) => {
           {userMenuOpen && (
             <div
               ref={userMenuDropdownRef}
-              className="desktop-profile-dropdown absolute right-0 top-full min-w-[360px] bg-white rounded-xl shadow-lg z-50 px-6 py-4 text-gray-900 border border-gray-200 animate-fade-in"
+              className="desktop-profile-dropdown absolute right-0 top-full min-w-[360px] rounded-xl shadow-lg z-50 px-6 py-4 border border-gray-200 animate-fade-in"
               role="menu"
               aria-label="User menu"
+              style={{ background: 'var(--bg)', color: 'var(--muted)' }}
             >
               {/* User info */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-3 px-4 py-3 " style={{ background: 'transparent' }}>
                 <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" className="w-9 h-9 rounded-full object-cover mr-2" />
                 <div className="flex-1">
                   <div className="font-semibold text-base mb-0.5">{(user?.first_name || '') + ' ' + (user?.last_name || '')}</div>
@@ -79,34 +80,34 @@ const LocationHeader: React.FC<LocationHeaderProps> = ({ user }) => {
                   {navTabs.map(tab => (
                     <li key={tab.key}>
                       <button
-                        className="w-full flex items-center bg-gray-50 hover:bg-primary/10 focus:bg-primary/20 border-none rounded-lg px-4 py-3 text-base font-medium text-gray-900 gap-3 transition-colors mb-1 focus:outline-none"
+                        className="w-full flex items-center border-none rounded-lg px-4 py-3 text-base font-medium gap-3 transition-colors mb-1 focus:outline-none"
                         aria-label={tab.label}
                         onClick={() => {
                           setUserMenuOpen(false);
                           if (tab.key === 'profile') {
-                            if (window && window.dispatchEvent) {
-                              window.dispatchEvent(new CustomEvent('openProfileDesktopModal'));
-                            }
+                            window.location.href = '/profile';
                           } else {
                             window.location.href = `/${tab.key}`;
                           }
                         }}
+                        style={{ background: 'var(--bg)', color: '#fff' }}
                       >
-                        <i className={`${tab.icon} text-lg w-6 text-primary`} aria-hidden></i>
+                        <i className={`${tab.icon} text-lg w-6`} aria-hidden style={{ color: 'var(--muted)' }}></i>
                         <span className="whitespace-nowrap">{tab.label}</span>
                       </button>
                     </li>
                   ))}
-                  <li>
-                    <button
-                      className="w-full flex items-center bg-red-50 text-red-600 hover:bg-red-100 border-none rounded-lg px-4 py-3 text-base font-medium gap-3 transition-colors focus:outline-none"
-                      aria-label="Logout"
-                      onClick={() => { setUserMenuOpen(false); sessionStorage.clear(); window.location.href = '/login'; }}
-                    >
-                      <i className="fas fa-sign-out-alt text-lg w-6 text-red-600" aria-hidden></i>
-                      <span>Logout</span>
-                    </button>
-                  </li>
+                    <li>
+                      <button
+                        className="w-full flex items-center border-none rounded-lg px-4 py-3 text-base font-medium gap-3 transition-colors focus:outline-none"
+                        aria-label="Logout"
+                        onClick={() => { setUserMenuOpen(false); sessionStorage.clear(); window.location.href = '/login'; }}
+                        style={{ background: 'var(--bg)', color: '#e74c3c' }}
+                      >
+                        <i className="fas fa-sign-out-alt text-lg w-6" aria-hidden style={{ color: '#e74c3c' }}></i>
+                        <span>Logout</span>
+                      </button>
+                    </li>
                 </ul>
               </nav>
             </div>

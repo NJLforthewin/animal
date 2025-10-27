@@ -198,28 +198,131 @@ export async function insertAlert() {
     const userId = userIds.length > 0 ? userIds[randInt(0, userIds.length - 1)] : null;
     if (userId) {
       await pool.query(
-        'INSERT INTO alert (device_id, user_id, alert_type, alert_description, created_at) VALUES (?, ?, ?, ?, NOW())',
-        [device.device_id, userId, 'Emergency', 'Emergency button pressed']
+        'INSERT INTO alert (device_id, user_id, alert_type, alert_description, trigger_type, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
+        [device.device_id, userId, 'Emergency', 'Emergency button pressed', 'button']
       );
-      console.log(`Inserted alert for device ${device.device_id}: Emergency button pressed for user ${userId}`);
+      console.log(`Inserted alert for device ${device.device_id}: Emergency button pressed for user ${userId} (trigger: button)`);
     } else {
       console.log('No users found, skipping alert insert.');
     }
   }
 }
 
-// Insert random activity log
+// Insert realistic smart cane sensor events
 export async function insertActivityLog() {
   const [devices] = await pool.query('SELECT device_id FROM device');
-  const events = ['walking', 'idle', 'charging', 'error'];
+  const directions = ['left', 'right', 'front', 'back'];
+  const buttons = ['SOS', 'mode', 'power'];
   for (const device of devices as any[]) {
-    // Device-specific event selection for uniqueness
-    const eventIdx = (device.device_id + randInt(0, events.length-1)) % events.length;
-    const event = events[eventIdx];
-    const steps = randInt(0, 5000) + (device.device_id % 100);
-    const payload = JSON.stringify({ event, steps, timestamp: new Date().toISOString() });
-    await pool.query('INSERT INTO activity_log (device_id, event_type, payload, timestamp) VALUES (?, ?, ?, NOW())', [device.device_id, event, payload]);
-    console.log(`Inserted activity log for device ${device.device_id}: ${event}`);
+    // Randomly pick an event type (sensor + non-sensor)
+    const eventTypes = [
+      'obstacle', 'button_press', 'vibration', 'gsm_status',
+      'walking', 'idle', 'error'
+    ];
+    const eventType = eventTypes[randInt(0, eventTypes.length - 1)];
+    let payload: any = { timestamp: new Date().toISOString() };
+    switch (eventType) {
+      case 'obstacle':
+        payload = {
+          event: 'obstacle',
+          distance: randInt(30, 200), // cm
+          direction: directions[randInt(0, directions.length - 1)],
+          timestamp: new Date().toISOString()
+        };
+        break;
+      case 'button_press':
+        payload = {
+          event: 'button_press',
+          button: buttons[randInt(0, buttons.length - 1)],
+          timestamp: new Date().toISOString()
+        };
+        break;
+      case 'vibration':
+        payload = {
+          event: 'vibration',
+          pattern: randInt(1, 3),
+          duration_ms: randInt(100, 1000),
+          timestamp: new Date().toISOString()
+        };
+        break;
+      case 'gsm_status':
+        payload = {
+          event: 'gsm_status',
+          signal_strength: randInt(0, 31),
+          connected: Math.random() > 0.2,
+          timestamp: new Date().toISOString()
+        };
+        break;
+      case 'walking':
+        payload = {
+          event: 'walking',
+          speed: randInt(1, 5), // km/h
+          step_count: randInt(10, 100),
+          timestamp: new Date().toISOString()
+        };
+        break;
+      case 'idle':
+        payload = {
+          event: 'idle',
+          duration_min: randInt(1, 60),
+          timestamp: new Date().toISOString()
+        };
+        break;
+      case 'error':
+        payload = {
+          event: 'error',
+          code: randInt(100, 999),
+          message: 'Simulated error',
+          timestamp: new Date().toISOString()
+        };
+        break;
+      default:
+        payload = { event: eventType, timestamp: new Date().toISOString() };
+    }
+    await pool.query(
+      'INSERT INTO activity_log (device_id, event_type, payload, timestamp) VALUES (?, ?, ?, NOW())',
+      [device.device_id, eventType, JSON.stringify(payload)]
+    );
+    // Update device_status table for real-time status
+    let statusUpdate: any = {};
+    switch (eventType) {
+      case 'obstacle':
+        statusUpdate = {
+          obstacle_distance: payload.distance,
+          obstacle_severity: 'normal',
+        };
+        break;
+      case 'button_press':
+        statusUpdate = {
+          button_action: payload.button,
+        };
+        break;
+      case 'vibration':
+        statusUpdate = {
+          vibration_pattern: payload.pattern,
+          vibration_duration: payload.duration_ms,
+        };
+        break;
+      case 'gsm_status':
+        statusUpdate = {
+          gsm_connected: payload.connected ? 1 : 0,
+          gsm_signal_strength: payload.signal_strength,
+        };
+        break;
+      default:
+        statusUpdate = {};
+    }
+    if (Object.keys(statusUpdate).length > 0) {
+      const columns = Object.keys(statusUpdate).map(k => `${k} = ?`).join(', ');
+      const values = Object.values(statusUpdate);
+      await pool.query(
+        `INSERT INTO device_status (device_id, ${Object.keys(statusUpdate).join(', ')}) VALUES (?, ${Object.keys(statusUpdate).map(_ => '?').join(', ')})
+        ON DUPLICATE KEY UPDATE ${columns}, updated_at = CURRENT_TIMESTAMP`,
+        [device.device_id, ...values, ...values]
+      );
+      console.log(`Updated device_status for device ${device.device_id}:`, statusUpdate);
+    }
+    console.log(`Inserted activity log for device ${device.device_id}: ${eventType}`);
   }
 }
 

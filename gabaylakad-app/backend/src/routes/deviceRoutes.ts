@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticateToken } from '../middleware/authMiddleware';
 import {
   getAllDevices,
   getDeviceById,
@@ -11,11 +12,11 @@ import {
 const router = Router();
 
 
-router.get('/', getAllDevices);
-router.get('/serial/:serial_number', getDeviceBySerial);
-router.get('/:id', getDeviceById);
-router.post('/', createDevice);
-router.put('/:id', updateDevice);
-router.delete('/:id', deleteDevice);
+router.get('/', authenticateToken, getAllDevices);
+router.get('/serial/:serial_number', authenticateToken, getDeviceBySerial);
+router.get('/:id', authenticateToken, getDeviceById);
+router.post('/', authenticateToken, createDevice);
+router.put('/:id', authenticateToken, updateDevice);
+router.delete('/:id', authenticateToken, deleteDevice);
 
 export default router;

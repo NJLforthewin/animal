@@ -1,5 +1,5 @@
 import React from 'react';
-import HeaderDesktop from '../components/headerDesktop';
+import Header from '../components/Header';
 
 interface ProfileLeftPanelProps {
   user: any;
@@ -8,7 +8,7 @@ interface ProfileLeftPanelProps {
 const ProfileLeftPanel: React.FC<ProfileLeftPanelProps> = ({ user }) => {
   return (
     <div className="profile-left-panel">
-      <HeaderDesktop user={user} />
+  <Header sx={{ bgcolor: 'background.paper', boxShadow: 1 }} />
       {/* Add more left panel content here if needed */}
     </div>
   );

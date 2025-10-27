@@ -1,15 +1,17 @@
-
-
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useContext } from 'react'; // Added useContext
 import DeviceInfoModal, { DeviceInfo } from '../components/DeviceInfoModal';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { io, Socket } from 'socket.io-client';
-import { UserType } from './Profile';
-import LocationHeaderResponsive from '../components/LocationHeaderResponsive';
+import { UserContext, UserType } from './Profile'; // Assuming UserContext is exported from Profile
+// import LocationHeaderResponsive from '../components/LocationHeaderResponsive'; // Removed
+import Header from '../components/Header'; // Use the standard MUI Header
+import { Box, Fab, Stack, Typography, Button } from '@mui/material'; // Import MUI components
+import RefreshIcon from '@mui/icons-material/Refresh'; // Icon for refresh
+import InfoIcon from '@mui/icons-material/Info'; // Icon for info
 
-// Device marker icon (reuse dashboard style or default Leaflet icon)
+// Device marker icon (ensure path is correct)
 const deviceIcon = new L.Icon({
   iconUrl: '/avatars/device-marker.png', // Update path if needed
   iconSize: [32, 32],
@@ -27,25 +29,35 @@ interface DeviceLocation {
 }
 
 const fetchAllLocations = async (): Promise<DeviceLocation[]> => {
-  const res = await fetch('/api/dashboard/location');
+  const token = sessionStorage.getItem('token');
+  const res = await fetch('/api/dashboard/location', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   const data = await res.json();
+  // Ensure we handle potential errors or empty responses gracefully
+  if (!res.ok || !data) return [];
   return Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
 };
-
-
 
 const LocationPage: React.FC = () => {
   const [devices, setDevices] = useState<DeviceLocation[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<any>(null); // Keep type as any for Leaflet ref
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInfo, setModalInfo] = useState<DeviceInfo | null>(null);
+  // Get user from context instead of fetching locally
+  const { user, setUser } = useContext(UserContext); // Get user and setUser from context
 
   // Fetch all locations (REST fallback)
   const loadLocations = useCallback(async () => {
-    const locs = await fetchAllLocations();
-    setDevices(locs);
+    try {
+      const locs = await fetchAllLocations();
+      setDevices(locs);
+    } catch (error) {
+      console.error("Failed to load locations:", error);
+      // Handle error appropriately, maybe show a snackbar
+    }
   }, []);
 
   // Socket.IO setup
@@ -53,49 +65,81 @@ const LocationPage: React.FC = () => {
     const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
     const socket = io(backendUrl, { transports: ['websocket'] });
     socketRef.current = socket;
+
     socket.on('connect', () => {
+      console.log('Socket connected');
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
     });
+
     socket.on('disconnect', () => {
-      // Fallback to polling every 10s
+      console.log('Socket disconnected, falling back to polling');
       if (!pollingRef.current) {
         pollingRef.current = setInterval(loadLocations, 10000);
       }
     });
+
     socket.on('location_update', (data: DeviceLocation) => {
-      setDevices((prev) => {
-        const idx = prev.findIndex((d) => d.device_id === data.device_id);
-        if (idx !== -1) {
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], ...data };
-          return updated;
-        } else {
-          return [...prev, data];
-        }
-      });
+      // Basic validation
+      if (data && data.device_id && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+        setDevices((prev) => {
+          const idx = prev.findIndex((d) => d.device_id === data.device_id);
+          if (idx !== -1) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], ...data }; // Merge updates
+            return updated;
+          } else {
+            return [...prev, data]; // Add new device
+          }
+        });
+      } else {
+        console.warn("Received invalid location update:", data);
+      }
     });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      // Fallback to polling if connection fails initially
+      if (!pollingRef.current) {
+        pollingRef.current = setInterval(loadLocations, 10000);
+      }
+    });
+
+
     return () => {
       socket.disconnect();
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [loadLocations]);
 
-  // Initial load
+  // Initial load via REST
   useEffect(() => {
     loadLocations();
   }, [loadLocations]);
 
-  // Manual refresh
-  const handleRefresh = () => loadLocations();
+  // Manual refresh handler
+  const handleRefresh = () => {
+    console.log("Manual refresh triggered");
+    loadLocations();
+  };
 
-  // Show device info modal for a device
+  // Show device info modal for a specific device
   const handleInfoClick = async (deviceId: string) => {
     try {
-      const res = await fetch(`/api/dashboard/device/${deviceId}`);
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`/api/dashboard/device/${deviceId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      if (!res.ok) throw new Error(`Failed to fetch device info: ${res.statusText}`);
       const raw = await res.json();
+
       // Map backend response to DeviceInfo interface
       const info: DeviceInfo = {
         latitude: raw.latitude ?? null,
@@ -106,7 +150,7 @@ const LocationPage: React.FC = () => {
         speed: raw.speed ?? null,
         altitude: raw.altitude ?? null,
         accuracy: raw.accuracy ?? null,
-        isOnline: true, // or infer from other fields
+        isOnline: true, // TODO: Infer online status correctly if possible
         street_name: raw.street_name ?? null,
         city_name: raw.city_name ?? null,
         place_name: raw.place_name ?? null,
@@ -121,75 +165,47 @@ const LocationPage: React.FC = () => {
       setModalInfo(info);
       setModalOpen(true);
     } catch (err) {
-      setModalInfo(null);
-      setModalOpen(false);
+      console.error("Error fetching device info:", err);
+      setModalInfo(null); // Clear info on error
+      setModalOpen(false); // Ensure modal is closed
+      // TODO: Show an error message to the user (e.g., Snackbar)
     }
   };
 
-  const [profile, setProfile] = useState<UserType | null>(null); // Kept profile state
-
-  // Fetch user profile for header/avatar
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const res = await fetch('/api/profile', {
-          headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
-        });
-        const data = await res.json();
-        setProfile(data);
-      } catch (err) {
-        setProfile(null);
+  const handleFabInfoClick = async () => {
+    if (devices.length > 0) {
+      const firstDevice = devices[0];
+      // Zoom and center map on the first device
+      const map = mapRef.current;
+      if (map && typeof firstDevice.latitude === 'number' && typeof firstDevice.longitude === 'number') {
+        map.setView([firstDevice.latitude, firstDevice.longitude], 18, { animate: true });
       }
+      // Show info for the first device
+      await handleInfoClick(firstDevice.device_id);
+    } else {
+      // Handle case with no devices - maybe show a message?
+      console.log("No devices available to show info for.");
+      setModalInfo(null); // Ensure no old info is shown
+      setModalOpen(true); // Open modal possibly showing "No device data"
     }
-    fetchProfile();
-  }, []);
-  // UI: Overlay header (responsive on all devices)
-  // Cebu City coordinates: 10.3157, 123.8854
+  };
+
+
   return (
-    <div style={{ height: '100vh', width: '100vw', position: 'relative', overflow: 'hidden' }}>
-      {/* Always show overlay header, responsive for both desktop and mobile */}
-      <LocationHeaderResponsive user={profile} />
-      {/* Device Info button above zoom/unzoom controls (absolute position) */}
-      <button
-        onClick={async () => {
-          if (devices.length > 0) {
-            // Zoom and center map on first device
-            const map = mapRef.current;
-            if (map) {
-              map.setView([devices[0].latitude, devices[0].longitude], 18, { animate: true });
-            }
-            await handleInfoClick(devices[0].device_id);
-          } else {
-            setModalInfo(null);
-            setModalOpen(true);
-          }
-        }}
-        title="Device Info"
-        style={{
-          position: 'absolute',
-          right: 24,
-          bottom: 170, // above zoom/unzoom and reload
-          zIndex: 1200,
-          background: '#fff',
-          color: '#2a9fd6',
-          border: '2px solid #2a9fd6',
-          borderRadius: '50%',
-          width: 52,
-          height: 52,
-          fontSize: 26,
-          boxShadow: '0 2px 8px #0002',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          transition: 'background 0.18s',
-        }}
-      >
-        <i className="fas fa-info-circle" style={{fontSize:'2rem'}}></i>
-      </button>
+    // Use Box for the main container
+    <Box sx={{ height: '100vh', width: '100vw', position: 'relative', overflow: 'hidden' }}>
+      {/* ----- FIX: Use Standard Header with Transparent Background ----- */}
+      <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 1100 }}>
+        {/* Pass user from context */}
+        {/* Apply transparency overrides directly to AppBar */}
+        <Header sx={{ bgcolor: 'transparent', boxShadow: 'none' }} />
+      </Box>
+      {/* ----- END FIX ----- */}
+
+      {/* Map Container */}
       <MapContainer
         ref={mapRef}
-        style={{ height: '100vh', width: '100vw', zIndex: 1 }}
+        style={{ height: '100%', width: '100%', zIndex: 1 }} // Keep map zIndex low
         center={[10.3157, 123.8854]} // Cebu City
         zoom={13}
         minZoom={12}
@@ -200,60 +216,71 @@ const LocationPage: React.FC = () => {
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
         {devices.map((d) => (
-          <Marker
-            key={d.device_id}
-            position={[d.latitude, d.longitude]}
-            icon={deviceIcon}
-          >
-            <Popup autoPan>
-              <div style={{ minWidth: 180 }}>
-                <div style={{ fontWeight: 600 }}>Serial: {d.serial_number || '--'}</div>
-                <div style={{ fontSize: 13 }}>{d.device_name || d.device_id}</div>
-                <div style={{ fontSize: 12, color: '#888' }}>{new Date(d.timestamp).toLocaleString()}</div>
-                <div style={{ fontSize: 13 }}>Lat: {d.latitude.toFixed(5)}<br />Lng: {d.longitude.toFixed(5)}</div>
-                <button
-                  style={{ marginTop: 8, padding: '4px 10px', background: '#2a9fd6', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 16 }}
-                  title="Device Info"
-                  onClick={() => handleInfoClick(d.device_id)}
-                >ℹ️ Device Info</button>
-              </div>
-            </Popup>
-          </Marker>
+          // Basic validation for lat/lng before rendering marker
+          (typeof d.latitude === 'number' && typeof d.longitude === 'number') && (
+            <Marker
+              key={d.device_id}
+              position={[d.latitude, d.longitude]}
+              icon={deviceIcon}
+            >
+              <Popup autoPan>
+                {/* Use MUI components inside Popup */}
+                <Stack spacing={0.5} sx={{ minWidth: 180 }}>
+                  <Typography variant="subtitle2" fontWeight="600">
+                    Serial: {d.serial_number || '--'}
+                  </Typography>
+                  <Typography variant="body2">
+                    {d.device_name || d.device_id}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(d.timestamp).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption">
+                    Lat: {d.latitude.toFixed(5)}<br />Lng: {d.longitude.toFixed(5)}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<InfoIcon />}
+                    onClick={() => handleInfoClick(d.device_id)}
+                    sx={{ mt: 1, alignSelf: 'flex-start' }}
+                  >
+                    Device Info
+                  </Button>
+                </Stack>
+              </Popup>
+            </Marker>
+          )
         ))}
       </MapContainer>
-      {/* Reload button floating at bottom right */}
-      <button
-        onClick={handleRefresh}
-        title="Reload locations"
-        style={{
+
+      {/* ----- FIX: Replaced buttons with MUI Fab ----- */}
+      {/* Floating Action Buttons */}
+      <Stack
+        spacing={2}
+        sx={{
           position: 'absolute',
-          right: 24,
           bottom: 24,
-          zIndex: 1100,
-          background: '#2a9fd6',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '50%',
-          width: 52,
-          height: 52,
-          fontSize: 26,
-          boxShadow: '0 2px 8px #0002',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          transition: 'background 0.18s',
+          right: 24,
+          zIndex: 1100, // Ensure FABs are above map but potentially below modal
         }}
       >
-        🔄
-      </button>
+        <Fab color="primary" aria-label="device info" onClick={handleFabInfoClick} size="medium">
+          <InfoIcon />
+        </Fab>
+        <Fab color="secondary" aria-label="reload" onClick={handleRefresh} size="medium">
+          <RefreshIcon />
+        </Fab>
+      </Stack>
+      {/* ----- END FIX ----- */}
+
 
       {/* Device Info Modal */}
       <DeviceInfoModal open={modalOpen} onClose={() => setModalOpen(false)} info={modalInfo} />
-    </div>
+    </Box>
   );
 };
 

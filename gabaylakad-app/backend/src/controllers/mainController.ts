@@ -1,4 +1,5 @@
 export const updateProfile = async (req: Request, res: Response) => {
+  console.log(`[MAIN] updateProfile called by user: ${req.user?.userId}`);
   try {
     const userId = req.user?.userId;
     if (!userId) {
@@ -49,6 +50,7 @@ import { Request, Response } from 'express';
 import { query } from '../utils/db';
 
 export const dashboard = async (req: Request, res: Response) => {
+  console.log(`[MAIN] dashboard called by user: ${req.user?.userId}`);
   try {
     const userId = req.user?.userId;
     console.log('[DASHBOARD] Incoming request. Decoded userId:', userId);
@@ -69,14 +71,27 @@ export const dashboard = async (req: Request, res: Response) => {
       res.setHeader('X-Login-Error', '[DASHBOARD] DB error on user lookup');
       return res.status(500).json({ message: 'Database error', error: dbErr });
     }
-    const userRows = Array.isArray(userResult.rows) ? userResult.rows : [];
-    const user = userRows[0];
+  const userRows = Array.isArray(userResult.rows) ? (userResult.rows as import('mysql2').RowDataPacket[]) : [];
+  const user = userRows[0];
     if (!user) {
       console.error('[DASHBOARD] User not found for userId:', userId);
       res.setHeader('X-Login-Error', '[DASHBOARD] User not found');
       return res.status(404).json({ message: 'User not found', userId });
     }
-    (user as any).device_serial_number = (user as any).device_id;
+    // Look up device serial number if device_id exists
+    let device_serial_number = null;
+    if (user && user.device_id) {
+      try {
+        const deviceRes = await query('SELECT serial_number FROM device WHERE device_id = ?', [user.device_id]);
+        const deviceRows = Array.isArray(deviceRes.rows) ? (deviceRes.rows as import('mysql2').RowDataPacket[]) : [];
+        if (deviceRows.length > 0) {
+          device_serial_number = deviceRows[0].serial_number;
+        }
+      } catch (err) {
+        console.error('[DASHBOARD] Error fetching device serial number:', err);
+      }
+    }
+    (user as any).device_serial_number = device_serial_number;
     // Example: Get recent history (limit 5)
   let recent: { action: string; date: string }[] = [];
     try {

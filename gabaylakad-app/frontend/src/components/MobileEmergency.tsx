@@ -1,7 +1,7 @@
 import React from 'react';
-// ...existing code...
-import LoadingValue from './LoadingValue';
-import '../styles/dashboard-mobile.css';
+import { Paper, Stack, Typography } from '@mui/material';
+import WarningIcon from '@mui/icons-material/Warning'; // Icon for emergency
+import LoadingValue from './LoadingValue'; // Assuming this component is compatible
 
 const MobileEmergency: React.FC<{ status: string; triggerType: string; loading?: boolean }> = ({ 
   status = 'READY',
@@ -10,25 +10,43 @@ const MobileEmergency: React.FC<{ status: string; triggerType: string; loading?:
 }) => {
   const state = status && String(status).trim() ? status : '';
   const trigger = triggerType && String(triggerType).trim() ? triggerType : '';
+
   return (
-    <div className="dashboard-mobile-card mobile-card-pos">
-      <div className="card-title-row">
-        <div className="card-title">EMERGENCY</div>
-        <div className="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-            <path d="M12 2L1 21h22L12 2zm1 16h-2v-2h2v2zm0-4h-2V7h2v7z"/>
-          </svg>
-        </div>
-      </div>
-      <div className="field-row">
-        <div className="field-label">State</div>
-        <LoadingValue loading={loading} value={state} className="field-value" title={state} compact />
-      </div>
-      <div className="field-row">
-        <div className="field-label">Trigger</div>
-        <LoadingValue loading={loading} value={trigger} className="field-value" title={trigger} compact />
-      </div>
-    </div>
+    <Paper 
+      elevation={2} 
+      sx={{ 
+        p: 2, 
+        borderRadius: 3, 
+        height: 180, 
+        minHeight: 180, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'space-between' 
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+        <Typography variant="body2" fontWeight="600" color="text.secondary">
+          EMERGENCY
+        </Typography>
+        <WarningIcon color="error" />
+      </Stack>
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          State
+        </Typography>
+        <Typography variant="h6" fontWeight="600" noWrap title={state} component="span">
+          <LoadingValue loading={loading} value={state} />
+        </Typography>
+      </Stack>
+      <Stack spacing={0.5} sx={{ mt: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          Trigger
+        </Typography>
+        <Typography variant="body2" noWrap title={trigger} component="span">
+          <LoadingValue loading={loading} value={trigger} />
+        </Typography>
+      </Stack>
+    </Paper>
   );
 };
 

@@ -25,23 +25,19 @@ const MainLayout: React.FC = () => {
   }, []);
 
   const location = useLocation();
-  const isMobile = window.innerWidth <= 600;
-  const isProfileMobile = isMobile && location.pathname === '/profile';
+  const isProfilePage = location.pathname === '/profile';
+  const isDashboardPage = location.pathname === '/dashboard';
+
   return (
     <UserContext.Provider value={{ user, setUser }}>
-      <div className="app-layout" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e3f0ff 0%, #b6cfff 100%)', overflowX: 'hidden' }}>
-        {/* Only render Header if not on /location, so overlay header is always used for Location page */}
+      <div className="app-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         {location.pathname !== '/location' && <Header />}
-        {/* <Sidebar /> */}
         <main
           className="main-content"
           style={{
-            padding: 0,
-            margin: 0,
-            minHeight: '100vh',
+            flex: 1,
             width: '100vw',
             position: 'relative',
-            overflowY: isProfileMobile ? 'hidden' : 'auto',
             background: 'none',
           }}
         >

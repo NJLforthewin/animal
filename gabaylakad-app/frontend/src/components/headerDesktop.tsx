@@ -1,126 +1,198 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserContext, UserType } from '../pages/Profile'; // Assuming UserContext is exported from Profile
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+  IconButton,
+  Avatar,
+  Menu,
+  MenuItem,
+  Divider,
+  Button,
+  ListItemIcon,
+  ListItemText,
+} from '@mui/material';
 
-interface HeaderDesktopProps {
-  user: any;
-}
+// Import MUI Icons
+import HomeIcon from '@mui/icons-material/Home';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import HistoryIcon from '@mui/icons-material/History';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import MemoryIcon from '@mui/icons-material/Memory';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import LogoutIcon from '@mui/icons-material/Logout';
 
+// Navigation tabs with MUI icons
 const navTabs = [
-  { key: 'dashboard', label: 'Dashboard', icon: 'fas fa-home' },
-  { key: 'profile', label: 'Account', icon: 'fas fa-user' },
-  { key: 'history', label: 'History', icon: 'fas fa-history' },
-  { key: 'location', label: 'Location Tracking', icon: 'fas fa-map-marker-alt' },
-  { key: 'sensor', label: 'Sensor Data', icon: 'fas fa-microchip' },
+  { key: 'dashboard', label: 'Dashboard', icon: <HomeIcon /> },
+  { key: 'profile', label: 'Account', icon: <AccountCircleIcon /> },
+  { key: 'history', label: 'History', icon: <HistoryIcon /> },
+  { key: 'location', label: 'Location Tracking', icon: <LocationOnIcon /> },
+  { key: 'sensor', label: 'Sensor Data', icon: <MemoryIcon /> },
 ];
 
-const HeaderDesktop: React.FC<HeaderDesktopProps> = ({ user }) => {
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuBtnRef = useRef<HTMLButtonElement |  null>(null);
-  const userMenuDropdownRef = useRef<HTMLDivElement | null>(null);
-  const navigate = useNavigate();
+interface HeaderDesktopProps {
+  user: UserType | null; // Use the specific type
+  onNavigate?: (path: string) => void;
+  // Allow passing sx props for customization (like transparency)
+  sx?: object; 
+}
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!userMenuOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (
-        userMenuDropdownRef.current &&
-        !userMenuDropdownRef.current.contains(e.target as Node) &&
-        userMenuBtnRef.current &&
-        !userMenuBtnRef.current.contains(e.target as Node)
-      ) {
-        setUserMenuOpen(false);
-      }
+const HeaderDesktop: React.FC<HeaderDesktopProps> = ({ user, onNavigate, sx }) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const userMenuOpen = Boolean(anchorEl);
+  const navigate = useNavigate(); // Use navigate hook directly
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleNavigationClick = (key: string) => {
+    const path = key === 'profile' ? '/profile' : `/${key}`;
+    handleMenuClose();
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      navigate(path); // Use navigate hook
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [userMenuOpen]);
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    sessionStorage.clear();
+    if (onNavigate) {
+      onNavigate('/login');
+    } else {
+      navigate('/login'); // Use navigate hook
+    }
+  };
+
+  // Generate a fallback avatar URL
+  const getAvatarSrc = () => {
+    if (user?.avatar) return user.avatar;
+    const name = encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || 'User'));
+    // Consistent background color with mobile/other parts
+    return `https://ui-avatars.com/api/?name=${name}&background=8e44ad&color=fff`; 
+  };
 
   return (
-    <div className="dashboard-header w-full fixed top-0 left-0 z-50 min-h-[64px] flex items-center justify-between px-10 py-6 bg-white shadow-none">
-      <div className="flex items-center">
-        <div className="w-20 h-20 flex items-center justify-center">
-          <img src="/Logo.png" alt="Logo" className="h-full w-auto max-w-full m-0 block" />
-        </div>
-      </div>
-      <div className="flex items-center gap-7 pr-6">
-        {/* Alerts & Safety Icon with Tooltip */}
-        <div className="relative inline-block mr-3">
-          <i className="fas fa-bell text-2xl text-primary cursor-pointer" />
-          {/* Tooltip can be refactored to use a shared Tooltip component if needed */}
-        </div>
-        {/* User profile avatar and dropbar menu */}
-        <div className="relative inline-flex items-center mr-2">
-          <button
-            ref={userMenuBtnRef}
-            className="desktop-profile-avatar-btn focus:ring-2 focus:ring-primary"
-            aria-label="Open user menu"
-            onClick={() => setUserMenuOpen((open) => !open)}
+    // Use AppBar for the main header structure
+    <AppBar 
+      position="fixed" // Changed to fixed from static
+      color="default" 
+      elevation={0} // Default to no shadow, override via sx if needed
+      sx={{ 
+        bgcolor: 'background.paper', // Default background
+        boxShadow: 1, // Default shadow
+        ...sx // Apply incoming sx props (allows transparency override)
+      }}
+    >
+      <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, px: { xs: 2, sm: 3, md: 5 } }}> {/* Adjust padding */}
+        {/* Logo */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}> {/* Added margin */}
+          {/* Adjusted logo size */}
+          <img src="/Logo.png" alt="Logo" style={{ height: 40, width: 'auto' }} /> 
+        </Box>
+
+        {/* Spacer */}
+        <Box sx={{ flexGrow: 1 }} /> 
+
+        {/* Right side icons */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}> {/* Reduced gap */}
+          {/* Notifications Icon */}
+          <IconButton color="inherit">
+            <NotificationsIcon />
+          </IconButton>
+
+          {/* User Avatar Button */}
+          <IconButton onClick={handleMenuClick} size="small">
+            <Avatar
+              src={getAvatarSrc()}
+              alt="Avatar"
+              sx={{ width: 36, height: 36 }} // Slightly smaller avatar
+            />
+          </IconButton>
+
+          {/* User Dropdown Menu */}
+          <Menu
+            anchorEl={anchorEl}
+            open={userMenuOpen}
+            onClose={handleMenuClose}
+            MenuListProps={{
+              'aria-labelledby': 'user-menu-button',
+            }}
+            PaperProps={{
+              elevation: 3,
+              sx: {
+                overflow: 'visible',
+                mt: 1.5,
+                width: 280, // Adjusted width
+                borderRadius: 2,
+                '& .MuiAvatar-root': {
+                  width: 36,
+                  height: 36,
+                  mr: 1.5,
+                },
+                '&:before': { // Optional: Arrow pointing up
+                  content: '""',
+                  display: 'block',
+                  position: 'absolute',
+                  top: 0,
+                  right: 14,
+                  width: 10,
+                  height: 10,
+                  bgcolor: 'background.paper',
+                  transform: 'translateY(-50%) rotate(45deg)',
+                  zIndex: 0,
+                },
+              },
+            }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
           >
-            <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" className="desktop-profile-avatar w-10 h-10 rounded-full object-cover shadow-md border-2 border-white" />
-          </button>
-          {/* Dropdown menu */}
-          {userMenuOpen && (
-            <div
-              ref={userMenuDropdownRef}
-              className="desktop-profile-dropdown absolute right-0 top-full min-w-[360px] bg-white rounded-xl shadow-lg z-50 px-6 py-4 text-gray-900 border border-gray-200 animate-fade-in"
-              role="menu"
-              aria-label="User menu"
-            >
-              {/* User info */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <img src={user?.avatar ? user.avatar : `https://ui-avatars.com/api/?name=${encodeURIComponent((user?.first_name || '') + ' ' + (user?.last_name || ''))}&background=8e44ad&color=fff`} alt="Avatar" className="w-9 h-9 rounded-full object-cover mr-2" />
-                <div className="flex-1">
-                  <div className="font-semibold text-base mb-0.5">{(user?.first_name || '') + ' ' + (user?.last_name || '')}</div>
-                  <div className="text-sm text-gray-500">{user?.email || 'user@email.com'}</div>
-                </div>
-              </div>
-              {/* Divider */}
-              <div className="border-b border-gray-100 my-2" />
-              {/* Menu: Navigation links and actions */}
-              <nav role="navigation" aria-label="User menu navigation">
-                <ul className="list-none m-0 p-0">
-                  {navTabs.map(tab => (
-                    <li key={tab.key}>
-                      <button
-                        className="w-full flex items-center bg-gray-50 hover:bg-primary/10 focus:bg-primary/20 border-none rounded-lg px-4 py-3 text-base font-medium text-gray-900 gap-3 transition-colors mb-1 focus:outline-none"
-                        aria-label={tab.label}
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          if (tab.key === 'profile') {
-                            // Open global ProfileDesktop modal overlay
-                            if (window && window.dispatchEvent) {
-                              window.dispatchEvent(new CustomEvent('openProfileDesktopModal'));
-                            }
-                          } else {
-                            navigate(`/${tab.key}`);
-                          }
-                        }}
-                      >
-                        <i className={`${tab.icon} text-lg w-6 text-primary`} aria-hidden></i>
-                        <span className="whitespace-nowrap">{tab.label}</span>
-                      </button>
-                    </li>
-                  ))}
-                  <li>
-                    <button
-                      className="w-full flex items-center bg-red-50 text-red-600 hover:bg-red-100 border-none rounded-lg px-4 py-3 text-base font-medium gap-3 transition-colors focus:outline-none"
-                      aria-label="Logout"
-                      onClick={() => { setUserMenuOpen(false); sessionStorage.clear(); navigate('/login'); }}
-                    >
-                      <i className="fas fa-sign-out-alt text-lg w-6 text-red-600" aria-hidden></i>
-                      <span>Logout</span>
-                    </button>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+            {/* User Info Header */}
+            <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center' }}>
+              <Avatar src={getAvatarSrc()} alt="Avatar" />
+              <Box sx={{ overflow: 'hidden' }}> {/* Prevent long names/emails overflowing */}
+                <Typography variant="body1" fontWeight="600" noWrap>
+                  {(user?.first_name || '') + ' ' + (user?.last_name || '')}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" noWrap>
+                  {user?.email || 'user@email.com'}
+                </Typography>
+              </Box>
+            </Box>
+            <Divider sx={{ mb: 1 }} />
+
+            {/* Navigation Links */}
+            {navTabs.map(tab => (
+              <MenuItem key={tab.key} onClick={() => handleNavigationClick(tab.key)}>
+                <ListItemIcon>{tab.icon}</ListItemIcon>
+                <ListItemText>{tab.label}</ListItemText>
+              </MenuItem>
+            ))}
+
+            <Divider sx={{ my: 1 }} />
+            
+            {/* Logout Button */}
+            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+              <ListItemIcon>
+                <LogoutIcon color="error" />
+              </ListItemIcon>
+              <ListItemText>Logout</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
 };
 
-export { HeaderDesktop };
 export default HeaderDesktop;

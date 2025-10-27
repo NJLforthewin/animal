@@ -1,12 +1,20 @@
     export const getLocationHistoryBySerial = async (req: Request, res: Response) => {
+    console.log(`[LOCATION] getLocationHistoryBySerial called by user: ${req.user?.userId}, serial: ${req.params.serial_number}`);
     const { serial_number } = req.params;
     if (!serial_number) {
         return res.status(400).json({ success: false, message: 'Missing serial_number parameter' });
     }
     try {
-        const sql = `SELECT * FROM location_log WHERE serial_number = ? ORDER BY timestamp DESC LIMIT 100`;
-        const [rows] = await pool.query(sql, [serial_number]);
-        return res.json({ success: true, data: rows });
+        // Always join device table to get serial_number
+        const sql = `SELECT ll.*, d.serial_number FROM location_log ll LEFT JOIN device d ON ll.device_id = d.device_id WHERE d.serial_number = ? ORDER BY ll.timestamp DESC LIMIT 100`;
+        const queryResult = await pool.query(sql, [serial_number]);
+        const rows = Array.isArray(queryResult[0]) ? queryResult[0] : [];
+        // Ensure every row has serial_number from device table
+        const mapped = rows.map((row: any) => ({
+            ...row,
+            serial_number: row.serial_number ?? null
+        }));
+        return res.json({ success: true, data: mapped });
     } catch (error) {
         console.error('[LocationHistoryBySerial SQL Error]', error);
         return res.status(500).json({ success: false, message: 'Failed to fetch location history by serial' });
@@ -20,32 +28,67 @@ import { reverseGeocodeNominatim, findNearestPOI } from '../utils/reverseGeocode
 
 // Get latest device info including POI fields
 export const getDeviceInfo = async (req: Request, res: Response) => {
-    const { deviceId } = req.params;
-    if (!deviceId) {
-        return res.status(400).json({ message: 'Missing deviceId parameter' });
+    console.log(`[LOCATION] getDeviceInfo called by user: ${req.user?.userId}`);
+    const userId = req.user?.userId;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized: No userId in token' });
     }
     try {
-        // Get latest location log for device
-        const sql = `SELECT * FROM location_log WHERE device_id = ? ORDER BY timestamp DESC LIMIT 1`;
-        const [rows]: [any[], any] = await pool.query(sql, [deviceId]);
-        if (!rows || rows.length === 0) {
-            return res.status(404).json({ message: 'No location found for device' });
+        // Get device_id for authenticated user
+        const [userRows]: [any[], any] = await pool.query('SELECT device_id FROM user WHERE user_id = ?', [userId]);
+        if (!userRows || userRows.length === 0 || !userRows[0].device_id) {
+            return res.status(404).json({ message: 'No device found for user' });
         }
-        // Return all fields including POI
-        return res.json(rows[0]);
+        const deviceId = userRows[0].device_id;
+            // Always join device table to get serial_number
+            const [rows]: [any[], any] = await pool.query(
+                `SELECT dl.*, d.serial_number
+                 FROM dashboard_latest dl
+                 LEFT JOIN device d ON dl.device_id = d.device_id
+                 WHERE dl.device_id = ?
+                 LIMIT 1`,
+                [deviceId]
+            );
+            if (!rows || rows.length === 0) {
+                return res.status(404).json({ error: 'Device not found' });
+            }
+            const device = rows[0];
+            // If serial_number is missing, fetch from device table
+            let serial_number = device.serial_number ?? null;
+            if (!serial_number && device.device_id) {
+                const [devRows]: [any[], any] = await pool.query('SELECT serial_number FROM device WHERE device_id = ?', [device.device_id]);
+                if (devRows && devRows.length > 0) {
+                    serial_number = devRows[0].serial_number ?? null;
+                }
+            }
+            res.status(200).json({
+                ...device,
+                street_name: device.street_name ?? null,
+                place_name: device.place_name ?? null,
+                context_tag: device.context_tag ?? null,
+                city_name: device.city_name ?? null,
+                serial_number: serial_number
+            });
     } catch (error) {
         console.error('[getDeviceInfo Error]', error);
         return res.status(500).json({ message: 'Failed to fetch device info' });
     }
 };
 export const getLocationHistory = async (req: Request, res: Response) => {
-    const { device_id } = req.params;
-    if (!device_id) {
-        return res.status(400).json({ success: false, message: 'Missing device_id parameter' });
+    console.log(`[LOCATION] getLocationHistory called by user: ${req.user?.userId}`);
+    const userId = req.user?.userId;
+    if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized: No userId in token' });
     }
     try {
+        // Get device_id for authenticated user
+        const [userRows]: [any[], any] = await pool.query('SELECT device_id FROM user WHERE user_id = ?', [userId]);
+        if (!userRows || userRows.length === 0 || !userRows[0].device_id) {
+            return res.status(404).json({ success: false, message: 'No device found for user' });
+        }
+        const deviceId = userRows[0].device_id;
         const sql = `SELECT * FROM location_log WHERE device_id = ? ORDER BY timestamp DESC LIMIT 100`;
-        const [rows] = await pool.query(sql, [device_id]);
+        const [rows] = await pool.query(sql, [deviceId]);
         return res.json({ success: true, data: rows });
     } catch (error) {
         console.error('[LocationHistory SQL Error]', error);
@@ -55,6 +98,7 @@ export const getLocationHistory = async (req: Request, res: Response) => {
 
 // TODO: integrate with IoT device data stream
 export const getAllLocations = async (req: Request, res: Response) => {
+    console.log(`[LOCATION] getAllLocations called by user: ${req.user?.userId}`);
     try {
         const [rows] = await pool.query('SELECT * FROM location');
         res.json(rows);
@@ -64,6 +108,7 @@ export const getAllLocations = async (req: Request, res: Response) => {
 };
 
 export const getLocationById = async (req: Request, res: Response) => {
+    console.log(`[LOCATION] getLocationById called by user: ${req.user?.userId}, locationId: ${req.params.id}`);
     try {
         const { id } = req.params;
         const [rows] = await pool.query('SELECT * FROM location WHERE location_id = ?', [id]);

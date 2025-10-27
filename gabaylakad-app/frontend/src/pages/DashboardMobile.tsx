@@ -1,6 +1,23 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import {
+  Box,
+  Paper,
+  Stack,
+  Avatar,
+  Typography,
+  Chip,
+  Divider,
+  // Grid, // Removed Grid
+} from '@mui/material';
 
-// import Header from '../components/Header';
+// Import MUI Icons
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+// Using a specific icon for a walking stick/cane if available, or a fallback.
+// 'Blind' or 'Accessibility' icons might also work. Let's use a sensor icon for the "Smart Stick".
+import SensorsIcon from '@mui/icons-material/Sensors'; 
+
+// Import all the dashboard cards
 import ExportButtons from '../components/ExportButtons';
 import DashboardLocationCard from '../components/DashboardLocationCard';
 import DashboardBatteryCard from '../components/DashboardBatteryCard';
@@ -8,70 +25,130 @@ import DashboardActivityCard from '../components/DashboardActivityCard';
 import DashboardEmergencyCard from '../components/DashboardEmergencyCard';
 import DashboardNightReflectorCard from '../components/DashboardNightReflectorCard';
 import DashboardActivityLogCard from '../components/DashboardActivityLogCard';
-import '../styles/dashboard-main.css';
-import '../styles/dashboard-mobile.css';
-// ...existing code...
+import DashboardSensorCard from '../components/DashboardSensorCard';
+// import '../styles/dashboard-main.css'; // Removed
+// import '../styles/dashboard-mobile.css'; // Removed
 
 interface DashboardMobileProps {
   user: any;
   data: any;
 }
 
-
 const DashboardMobile: React.FC<DashboardMobileProps> = ({ user, data }) => {
-  // Always render the card grid; let each card handle its own loading state
+  const isOnline = user?.isOnline;
+  const initials = (user?.blind_full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+
   return (
-    <div className="dashboard-mobile-container" style={{ overflowX: 'hidden' }}>
-  {/* Header is now provided by MainLayout */}
+    <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: 'grey.50' }}>
+      {/* Header is provided by MainLayout */}
       <main>
         {/* Profile Card Section */}
-  <div className="dashboard-mobile-patient-card">
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            gap: 1.5 
+          }}
+        >
           {/* Avatar */}
-          <div className="dashboard-mobile-avatar">
-            <span>{(user?.blind_full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}</span>
-          </div>
+          <Avatar 
+            sx={{ 
+              width: 80, 
+              height: 80, 
+              fontSize: '2.5rem', 
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText' 
+            }}
+          >
+            {initials}
+          </Avatar>
+          
           {/* Online/Offline Status */}
-          <div className="dashboard-mobile-condition" style={{display:'flex',alignItems:'center',gap:8}}>
-            <span
-              style={{
-                display: 'inline-block',
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                background: user?.isOnline ? '#43ce7b' : '#e74c3c',
-                marginRight: 4,
-                border: '2px solid #fff',
-                boxShadow: '0 0 4px rgba(44,62,80,0.18)'
-              }}
-              title={user?.isOnline ? 'Online' : 'Offline'}
-            ></span>
-            <span style={{fontWeight:700}}>{user?.isOnline ? 'Online' : 'Offline'}</span>
-          </div>
+          <Chip
+            icon={<FiberManualRecordIcon />}
+            label={isOnline ? 'Online' : 'Offline'}
+            color={isOnline ? 'success' : 'error'}
+            variant="outlined"
+            size="small"
+            sx={{ fontWeight: 600 }}
+          />
+          
           {/* Device status */}
-          <div className="dashboard-mobile-device-status">
-            <i className="fas fa-person-walking-with-cane" style={{ marginRight: 10, fontSize: '1.2em' }}></i>
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1, 
+              fontWeight: 500 
+            }}
+          >
+            <SensorsIcon sx={{ fontSize: '1.2rem' }} />
             Smart Stick #{user?.device_serial_number || '--'} - Connected
-          </div>
-        </div>
-        <hr className="section-divider" />
-        {/* Cards Grid - 2 columns, 3 rows */}
-        <div className="card-container">
-          <DashboardLocationCard deviceId={user?.device_id || ''} />
-          <DashboardBatteryCard />
-          <DashboardActivityCard />
-          <DashboardEmergencyCard />
-          <DashboardNightReflectorCard />
-        </div>
-        {/* Export Buttons above activity log for mobile */}
-        <div className="dashboard-mobile-export-buttons" style={{display: 'flex', gap: '1rem', marginBottom: '2rem', marginTop: '2rem'}}>
+          </Typography>
+        </Paper>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* ----- FIX: Replaced Grid with Stack ----- */}
+        {/* Cards Stack - 2 columns */}
+        <Stack spacing={2}>
+          {/* Row 1 */}
+          <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+            <Box sx={{ width: '50%', minWidth: 0 }}>
+              <Paper elevation={2} sx={{ height: 180, minHeight: 180, maxHeight: 180, overflow: 'hidden', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
+                <DashboardLocationCard deviceId={user?.device_id || ''} />
+              </Paper>
+            </Box>
+            <Box sx={{ width: '50%', minWidth: 0 }}>
+              <Paper elevation={2} sx={{ height: 180, minHeight: 180, maxHeight: 180, overflow: 'hidden', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
+                <DashboardBatteryCard />
+              </Paper>
+            </Box>
+          </Stack>
+          {/* Row 2 */}
+          <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
+            <Box sx={{ width: '50%', minWidth: 0 }}>
+              <Paper elevation={2} sx={{ height: 180, minHeight: 180, maxHeight: 180, overflow: 'hidden', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
+                <DashboardActivityCard />
+              </Paper>
+            </Box>
+            <Box sx={{ width: '50%', minWidth: 0 }}>
+              <Paper elevation={2} sx={{ height: 180, minHeight: 180, maxHeight: 180, overflow: 'hidden', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
+                <DashboardEmergencyCard />
+              </Paper>
+            </Box>
+          </Stack>
+          {/* Row 3 (Full width) */}
+          <Box sx={{ width: '100%', minWidth: 0 }}>
+            <Paper elevation={2} sx={{ height: 180, minHeight: 180, maxHeight: 180, overflow: 'hidden', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
+              <DashboardNightReflectorCard />
+            </Paper>
+          </Box>
+        </Stack>
+        {/* ----- END FIX ----- */}
+
+        {/* Export Buttons */}
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          justifyContent="center" 
+          sx={{ my: 3 }}
+        >
           <ExportButtons activityLog={data?.activityLog || []} />
-        </div>
+        </Stack>
+
         {/* Activity Log */}
-        <div className="dashboard-mobile-activity-log">
+        <Box>
           <DashboardActivityLogCard />
-        </div>
+        </Box>
       </main>
-    </div>
+    </Box>
   );
 };
 

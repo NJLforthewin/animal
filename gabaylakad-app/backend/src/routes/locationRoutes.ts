@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticateToken } from '../middleware/authMiddleware';
 import {
   getAllLocations,
   getLocationById,
@@ -12,12 +13,12 @@ import {
 const router = Router();
 
 
-router.get('/', getAllLocations);
-router.get('/history/serial/:serial_number', getLocationHistoryBySerial);
-router.get('/:id', getLocationById);
-router.post('/', createLocation);
-router.put('/:id', updateLocation);
-router.delete('/:id', deleteLocation);
-router.get('/history/:device_id', getLocationHistory);
+router.get('/', authenticateToken, getAllLocations);
+router.get('/history/serial/:serial_number', authenticateToken, getLocationHistoryBySerial);
+router.get('/:id', authenticateToken, getLocationById);
+router.post('/', authenticateToken, createLocation);
+router.put('/:id', authenticateToken, updateLocation);
+router.delete('/:id', authenticateToken, deleteLocation);
+router.get('/history/:device_id', authenticateToken, getLocationHistory);
 
 export default router;

@@ -26,13 +26,14 @@ const Login: React.FC = () => {
             if (res.ok) {
                 if (data.token) {
                     sessionStorage.setItem('token', data.token);
+                    console.log('[LOGIN SUCCESS] Token set:', data.token);
+                    alert('Login successful! Token set. You are authenticated and all user-context features should work.');
                     setSuccessMsg('Login successful! Redirecting...');
                     setTimeout(() => {
                         window.location.href = '/dashboard';
                     }, 2000);
                 } else {
                     setErrorMsg('No token received. Deep loading...');
-                    // Deep loading: try to find token in sessionStorage, localStorage, cookies
                     let foundToken = sessionStorage.getItem('token');
                     if (!foundToken) foundToken = localStorage.getItem('token');
                     if (!foundToken && document.cookie) {

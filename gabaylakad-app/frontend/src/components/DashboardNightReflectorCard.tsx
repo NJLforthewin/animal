@@ -4,7 +4,9 @@ import useIsMobile from './useIsMobile';
 import MobileView from './MobileView';
 import MobileNightReflector from './MobileNightReflector';
 import LoadingValue from './LoadingValue';
-import '../styles/dashboard-desktop-card.css';
+// import '../styles/dashboard-desktop-card.css'; // Removed
+import { Paper, Stack, Typography } from '@mui/material';
+import HighlightIcon from '@mui/icons-material/Highlight'; // Icon for reflector
 
 const fetchNightReflector = async () => {
   const res = await fetch('/api/dashboard/nightreflector', {
@@ -73,29 +75,44 @@ const DashboardNightReflectorCard: React.FC = () => {
         <MobileNightReflector status={status} lastChecked={lastChecked} loading={loading} />
       </MobileView>
       {isMobile ? null : (
-        <div className="dashboard-desktop-card desktop-card-pos">
-          <div>
-            <div className="card-title-row">
-              <div className="card-title">NIGHT REFLECTOR</div>
-              <div className="card-icon" aria-hidden>
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
-              </div>
-            </div>
-            <div className="field-row">
-              <div className="field-label">Status</div>
-              <LoadingValue loading={loading} value={statusLabel} className="field-value" title={String(statusLabel)} />
-            </div>
-            <div className="field-row">
-              <div className="field-label">Last Checked</div>
-              <LoadingValue loading={loading} value={lastChecked} className="field-value" title={String(lastChecked)} />
-            </div>
-          </div>
-        </div>
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            height: 180, 
+        minHeight: 180, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between' 
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="600" color="text.secondary">
+              NIGHT REFLECTOR
+            </Typography>
+            <HighlightIcon color="action" />
+          </Stack>
+          <Stack spacing={0.5}>
+            <Typography variant="caption" color="text.secondary">
+              Status
+            </Typography>
+            <Typography variant="h6" fontWeight="600" noWrap title={String(statusLabel)} component="span">
+              <LoadingValue loading={loading} value={statusLabel} />
+            </Typography>
+          </Stack>
+          <Stack spacing={0.5} sx={{ mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Last Checked
+            </Typography>
+            <Typography variant="body2" noWrap title={String(lastChecked)} component="span">
+              <LoadingValue loading={loading} value={lastChecked} />
+            </Typography>
+          </Stack>
+        </Paper>
       )}
     </DashboardCardBoundary>
   );
 };
 
 export default DashboardNightReflectorCard;
-
-// NightModal removed: mobile view no longer shows an inline modal

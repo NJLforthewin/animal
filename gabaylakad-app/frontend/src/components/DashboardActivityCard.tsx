@@ -3,7 +3,9 @@ import DashboardCardBoundary from './DashboardCardBoundary';
 import useIsMobile from './useIsMobile';
 import MobileView from './MobileView';
 import LoadingValue from './LoadingValue';
-import '../styles/dashboard-desktop-card.css';
+// import '../styles/dashboard-desktop-card.css'; // Removed
+import { Paper, Stack, Typography } from '@mui/material';
+import TimelineIcon from '@mui/icons-material/Timeline'; // Icon for activity
 
 const fetchActivity = async () => {
   const res = await fetch('/api/dashboard/activity', {
@@ -64,50 +66,80 @@ const DashboardActivityCard: React.FC = () => {
       : loading
         ? ''
         : 'Missing';
+
+  // Shared content layout for both mobile and desktop
+  const cardContent = (
+    // ----- FIX: Added React.Fragment wrapper -----
+    <>
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          Status
+        </Typography>
+        <Typography variant="h6" fontWeight="600" noWrap title={activity} component="span">
+          <LoadingValue loading={loading} value={activity} />
+        </Typography>
+      </Stack>
+      <Stack spacing={0.5} sx={{ mt: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          Steps
+        </Typography>
+        <Typography variant="body2" noWrap title={steps ? `${steps} steps today` : ''} component="span">
+          <LoadingValue loading={loading} value={steps ? `${steps} steps today` : ''} />
+        </Typography>
+      </Stack>
+    </>
+    // ----- END FIX -----
+  );
+
   return (
     <DashboardCardBoundary>
       {error && (
-        <div style={{ color: 'red', marginBottom: 8, fontWeight: 'bold' }}>{error}</div>
+        <Typography color="error" sx={{ mb: 1, fontWeight: 'bold' }}>{error}</Typography>
       )}
       <MobileView>
-        <div className="dashboard-mobile-card mobile-card-pos">
-          <div className="card-title-row">
-            <div className="card-title">ACTIVITY STATUS</div>
-            <div className="card-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                <path d="M13 2v8l5.5 2.5L13 15v7l9-5.5V7L13 2zM4 6v12l9 5.5V7L4 6z"/>
-              </svg>
-            </div>
-          </div>
-          <div className="field-row">
-            <div className="field-label">Status</div>
-            <LoadingValue loading={loading} value={activity} className="field-value" title={activity} />
-          </div>
-          <div className="field-row">
-            <div className="field-label">Steps</div>
-            <LoadingValue loading={loading} value={steps ? `${steps} steps today` : ''} className="field-value" title={steps ? `${steps} steps today` : ''} />
-          </div>
-        </div>
+        {/* Refactored Mobile View */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            height: 180, 
+        minHeight: 180, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between' 
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="600" color="text.secondary">
+              ACTIVITY STATUS
+            </Typography>
+            <TimelineIcon color="action" />
+          </Stack>
+          {cardContent}
+        </Paper>
       </MobileView>
       {isMobile ? null : (
-        <div className="dashboard-desktop-card desktop-card-pos">
-          <div>
-            <div className="card-title-row">
-              <div className="card-title">ACTIVITY</div>
-              <div className="card-icon" aria-hidden>
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 2v8l5.5 2.5L13 15v7l9-5.5V7L13 2zM4 6v12l9 5.5V7L4 6z"/></svg>
-              </div>
-            </div>
-            <div className="field-row">
-              <div className="field-label">Status</div>
-              <LoadingValue loading={loading} value={activity} className="field-value" title={activity} />
-            </div>
-            <div className="field-row">
-              <div className="field-label">Steps</div>
-              <LoadingValue loading={loading} value={steps ? `${steps} steps today` : ''} className="field-value" title={steps ? `${steps} steps today` : ''} />
-            </div>
-          </div>
-        </div>
+        /* Refactored Desktop View */
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between' 
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="600" color="text.secondary">
+              ACTIVITY
+            </Typography>
+            <TimelineIcon color="action" />
+          </Stack>
+          {cardContent}
+        </Paper>
       )}
     </DashboardCardBoundary>
   );
@@ -115,4 +147,3 @@ const DashboardActivityCard: React.FC = () => {
 
 export default DashboardActivityCard;
 
-// ActivityModal removed: mobile view no longer shows an inline modal

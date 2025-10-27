@@ -1,0 +1,12 @@
+.shimmer-value {
+  background: linear-gradient(90deg, #444 25%, #888 50%, #222 75%);
+  background-size: 200% 100%;
+  animation: shimmer-move 1.2s infinite linear;
+  min-width: 80px;
+  min-height: 1.2em;
+}
+
+@keyframes shimmer-move {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

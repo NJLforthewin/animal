@@ -1,5 +1,7 @@
 import React from 'react';
+import { Avatar, Button, Stack, Box } from '@mui/material';
 
+// Define the props interface
 interface AvatarCircleProps {
   src?: string;
   initials?: string;
@@ -10,23 +12,50 @@ interface AvatarCircleProps {
   changeButtonText?: string;
 }
 
-const AvatarCircle: React.FC<AvatarCircleProps> = ({ src, initials, size = 100, ring = true, onChange, showChangeButton = false, changeButtonText = 'Change Avatar' }) => {
-  const border = ring ? '4px solid #fff' : 'none';
-  const url = src;
-  const bg = '#ff867c';
-
+const AvatarCircle: React.FC<AvatarCircleProps> = ({
+  src,
+  initials,
+  size = 100,
+  ring = true,
+  onChange,
+  showChangeButton = false,
+  changeButtonText = 'Change Avatar',
+}) => {
+  // Use MUI's Avatar component, which handles src and initials fallback automatically
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      {url ? (
-        <img src={url} alt="Avatar" style={{ width: size, height: size, borderRadius: '50%', border, objectFit: 'cover', boxShadow: '0 2px 8px rgba(44,62,80,0.10)' }} />
-      ) : (
-        <div style={{ width: size, height: size, borderRadius: '50%', border, display: 'flex', alignItems: 'center', justifyContent: 'center', background: bg, color: '#fff', fontWeight: 700, fontSize: Math.round(size / 2.8) }}>{initials || ''}</div>
-      )}
+    <Stack spacing={1.5} alignItems="center">
+      <Avatar
+        src={src || undefined} // Pass undefined (not empty string) if src is falsy
+        alt="Avatar"
+        sx={{
+          width: size,
+          height: size,
+          // Handle ring with a border and box-sizing
+          border: ring ? '4px solid' : 'none',
+          borderColor: 'background.paper', // Use theme color
+          boxShadow: 3, // Use theme shadow
+          // Handle initials fallback styling
+          bgcolor: 'primary.main', // Use theme color for background
+          color: 'primary.contrastText',
+          fontWeight: 700,
+          fontSize: Math.round(size / 2.8), // Keep your font sizing logic
+        }}
+      >
+        {/* Children are used as a fallback if src is missing/fails to load */}
+        {initials || ''}
+      </Avatar>
 
       {showChangeButton && (
-        <button type="button" onClick={onChange} style={{ marginTop: 8, background: '#232946', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.6rem', fontWeight: 600, fontSize: '1.02rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(44,62,80,0.10)' }}>{changeButtonText}</button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onChange}
+          sx={{ fontWeight: 600, fontSize: '1rem', px: 3, py: 1 }}
+        >
+          {changeButtonText}
+        </Button>
       )}
-    </div>
+    </Stack>
   );
 };
 

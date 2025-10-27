@@ -115,24 +115,27 @@ const RegisterForm: React.FC = () => {
             const data = await res.json();
             console.log('Register response:', data);
             if (res.ok) {
+                // Show assigned device info after registration
+                setSuccessMsg(
+                  `Registration successful!\nDevice Serial: ${data.serial_number || deviceId}\nDevice ID: ${data.device_id || ''}`
+                );
                 // If backend returns token, save and redirect
                 if (data.token) {
                     sessionStorage.setItem('token', data.token);
-                    alert('Token saved to sessionStorage: ' + sessionStorage.getItem('token'));
-                    setSuccessMsg('Registration successful! Redirecting to dashboard...');
                     setTimeout(() => {
                         navigate('/dashboard');
-                    }, 1500);
+                    }, 2000);
                 } else {
                     // If no token, redirect to verification page with email and password
-                    setSuccessMsg(data.message || 'Registration successful! Please verify your account.');
                     setTimeout(() => {
                         navigate(`/verify?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-                    }, 1200);
+                    }, 2000);
                 }
             } else {
-                if (data.message && data.message.includes('device_id')) {
-                    setErrorMsg('The Device ID you entered already exists. Please check your device manual for the correct Device ID or use a different one.');
+                if (data.message && data.message.toLowerCase().includes('already assigned')) {
+                    setErrorMsg('The device serial number you entered is already assigned to another user. Please use a different device.');
+                } else if (data.message && data.message.toLowerCase().includes('already exists')) {
+                    setErrorMsg('The device serial number you entered already exists and is assigned. Please use a different device.');
                 } else {
                     setErrorMsg(data.message || 'Registration failed!');
                 }

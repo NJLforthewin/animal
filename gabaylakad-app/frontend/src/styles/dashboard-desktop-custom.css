@@ -1,0 +1,57 @@
+:root{
+  --card-bg: #1A202C;
+  --border-radius: 12px;
+  --shadow: 0 6px 18px rgba(35,41,70,0.06);
+  --light-text-color: #7f8c8d;
+  --text-color: #ffffff;
+}
+
+/* Apply only on desktop widths */
+@media (min-width: 900px) {
+  .grid-container, .dashboard-cards-grid, .card-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 25px;
+    margin-bottom: 30px; /* Reset margin-bottom as padding on container handles it */
+    flex-grow: 1;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Map to existing dashboard card classes: keep compatibility with .dashboard-card and desktop card variant */
+  .card, .dashboard-card, .dashboard-desktop-card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 150px;
+    box-sizing: border-box;
+  }
+
+  /* Title styling: map to commonly used title selectors */
+  .card h3, .card .card-title, .dashboard-card .card-title, .dashboard-desktop-card .card-title {
+    font-size: 0.85rem; /* Slightly smaller */
+    color: var(--light-text-color); /* Updated text color */
+    font-weight: 600; /* Slightly bolder */
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+  }
+
+  .card-content p, .dashboard-card .card-preview .pv-row, .dashboard-card .card-preview .pv-row b {
+    font-size: 0.85rem;
+    color: var(--light-text-color);
+    margin-bottom: 5px;
+  }
+
+  .card-content .value, .card .value, .dashboard-card-value, .dashboard-desktop-card .field-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 10px;
+  }
+}

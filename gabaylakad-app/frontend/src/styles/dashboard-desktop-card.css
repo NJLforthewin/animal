@@ -2,7 +2,7 @@
   --page-bg: #111827;
   --bg: #1f2937;
   --border: #374151;
-  --text: #f9fafb;
+  --text: #9ca3af;
   --muted: #9ca3af;
   --accent: #3b82f6;
   --radius: 10px;
@@ -14,8 +14,9 @@
   gap: 20px;
   max-width: 1400px;
   margin: 0 auto;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, 264px);
 }
+
 
 .dashboard-desktop-card {
   background: var(--bg);
@@ -28,7 +29,9 @@
   gap: 12px;
   position: relative;
   transition: transform 0.2s ease, border-color 0.2s ease;
+  color: var(--text);
 }
+
 
 .dashboard-desktop-card:hover {
   transform: translateY(-3px);
@@ -37,11 +40,12 @@
 
 .dashboard-desktop-card .card-title-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   width: 100%;
 }
 
 .dashboard-desktop-card .card-title {
+  color: var(--text);
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--muted);
@@ -56,10 +60,14 @@
   color: var(--muted);
 }
 
+
+
 .dashboard-desktop-card .field-row {
+  /* No width restriction, allow to expand with content */
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 50px;
 }
 
 .dashboard-desktop-card .field-row + .field-row {
@@ -68,12 +76,15 @@
 }
 
 .dashboard-desktop-card .field-label {
+  color: var(--text);
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 500;
+  flex: 0 0 auto;
 }
 
 .dashboard-desktop-card .field-value {
+  color: var(--text);
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 600;
@@ -82,16 +93,43 @@
   text-overflow: ellipsis;
   max-width: 60%;
   text-align: right;
-  min-width: 140px; /* reserve space so spinner doesn't push layout */
-  display: inline-flex;
-  justify-content: flex-end;
-  align-items: center;
+  /* allow the value to shrink inside a flex container so long text doesn't grow the card */
+  min-width: 0;
 }
+
+/* ensure card (flex column) and rows allow children to shrink properly in grid layout */
+.dashboard-desktop-card,
+.dashboard-desktop-card .field-row {
+  min-width: 0;
+}
+
 
 .dashboard-desktop-card .field-value.street.primary {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--accent);
+}
+
+.loading-value-inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+  min-height: 1.2em;
+}
+
+  /* Removed duplicate definition */
+@media (min-width: 900px) {
+  .dashboard-desktop-card.desktop-card-pos {
+    height: 205px;
+  }
+
+  .dashboard-desktop-card.desktop-card-pos > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
 }
 
 @media (max-width: 900px) {

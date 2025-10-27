@@ -6,18 +6,24 @@ import { useSocketLocation } from '../hooks/useSocketLocation';
   import MobileView from './MobileView';
   import MobileLocation from './MobileLocation';
   import LoadingValue from './LoadingValue';
-  import '../styles/dashboard-desktop-card.css';
+  // import '../styles/dashboard-desktop-card.css'; // Removed
+  import { Paper, Stack, Typography } from '@mui/material';
+  import LocationOnIcon from '@mui/icons-material/LocationOn'; // Icon for location
 
-const fetchLocation = async () => {
-  const res = await fetch('/api/dashboard/location', {
-    headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+
+const fetchLocation = async (deviceId: string) => {
+  const token = sessionStorage.getItem('token');
+  const res = await fetch(`/api/dashboard/device/${deviceId}`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  if (!res.ok) throw new Error('Failed to fetch device location');
   return await res.json();
 };
 
 interface DashboardLocationCardProps {
   deviceId: string;
 }
+
 
 const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId }) => {
   const { location: socketLocation } = useSocketLocation(deviceId);
@@ -26,12 +32,12 @@ const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId 
 
   useEffect(() => {
     let mounted = true;
-  let lastData: any = null;
+    let lastData: any = null;
     const fetchAndUpdate = () => {
       setLoading(true);
-      fetchLocation().then(res => {
-          // DEBUG: Log backend response
-          console.log('[DashboardLocationCard] fetchLocation response:', res);
+      fetchLocation(deviceId).then(res => {
+        // DEBUG: Log backend response
+        console.log('[DashboardLocationCard] fetchLocation response:', res);
         if (mounted) {
           setLoading(false);
           if (res && Object.keys(res).length > 0) {
@@ -51,7 +57,7 @@ const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId 
     fetchAndUpdate();
     const interval = setInterval(fetchAndUpdate, 5000);
     return () => { mounted = false; clearInterval(interval); };
-  }, []);
+  }, [deviceId]);
 
   const isMobile = useIsMobile();
   // Accept both object and array response, map correct backend fields
@@ -82,10 +88,11 @@ const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId 
         poi_distance_m: socketLocation.poi_distance_m ?? null
       };
     } else {
-      const loc = Array.isArray(data?.data) ? data.data[0] : Array.isArray(data) ? data[0] : data;
+      // For /api/dashboard/device/:id, the response is a flat object
+      const loc = data;
       lat = loc?.latitude;
       lng = loc?.longitude;
-      ts = loc?.timestamp;
+      ts = loc?.timestamp || loc?.location_timestamp;
       return lat !== undefined ? {
         latitude: lat,
         longitude: lng,
@@ -124,24 +131,41 @@ const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId 
         <MobileLocation locationLabel={displayStreet} lastSeen={displayPlace} loading={loading} />
       </MobileView>
       {isMobile ? null : (
-        <div className="dashboard-desktop-card desktop-card-pos">
-          <div>
-            <div className="card-title-row">
-              <div className="card-title">LOCATION</div>
-              <div className="card-icon" aria-hidden>
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-              </div>
-            </div>
-            <div className="field-row">
-              <div className="field-label">Street</div>
-              <LoadingValue loading={loading} value={displayStreet} className="field-value street primary" title={String(displayStreet)} />
-            </div>
-            <div className="field-row">
-              <div className="field-label">Place</div>
-              <LoadingValue loading={loading} value={displayPlace} className="field-value" title={String(displayPlace)} />
-            </div>
-          </div>
-        </div>
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 2, 
+            borderRadius: 3, 
+            height: 180, 
+        minHeight: 180, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'space-between' 
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+            <Typography variant="body2" fontWeight="600" color="text.secondary">
+              LOCATION
+            </Typography>
+            <LocationOnIcon color="primary" />
+          </Stack>
+          <Stack spacing={0.5}>
+            <Typography variant="caption" color="text.secondary">
+              Street
+            </Typography>
+              <Typography variant="h6" fontWeight="600" noWrap title={String(displayStreet)} component="span">
+                <LoadingValue loading={loading} value={displayStreet} />
+              </Typography>
+          </Stack>
+          <Stack spacing={0.5} sx={{ mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Place
+            </Typography>
+              <Typography variant="body2" noWrap title={String(displayPlace)} component="span">
+                <LoadingValue loading={loading} value={displayPlace} />
+              </Typography>
+          </Stack>
+        </Paper>
       )}
     </DashboardCardBoundary>
   );

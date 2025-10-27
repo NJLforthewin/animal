@@ -5,8 +5,11 @@ import { ResultSetHeader } from 'mysql2';
 // TODO: integrate with IoT device data stream
 
 export const getAllAlerts = async (req: Request, res: Response) => {
+    console.log(`[ALERT] getAllAlerts called by user: ${req.user?.userId}`);
     try {
-        const [rows] = await pool.query('SELECT * FROM alert');
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized: No userId in token' });
+        const [rows] = await pool.query('SELECT * FROM alert WHERE user_id = ?', [userId]);
         res.json(rows);
     } catch (error) {
         res.status(500).json({ message: 'Database error', error });
@@ -14,9 +17,12 @@ export const getAllAlerts = async (req: Request, res: Response) => {
 };
 
 export const getAlertById = async (req: Request, res: Response) => {
+    console.log(`[ALERT] getAlertById called by user: ${req.user?.userId}, alertId: ${req.params.id}`);
     try {
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized: No userId in token' });
         const { id } = req.params;
-        const [rows] = await pool.query('SELECT * FROM alert WHERE alert_id = ?', [id]);
+        const [rows] = await pool.query('SELECT * FROM alert WHERE alert_id = ? AND user_id = ?', [id, userId]);
         const alerts = rows as any[];
         if (alerts.length === 0) return res.status(404).json({ message: 'Alert not found' });
         res.json(alerts[0]);
@@ -26,8 +32,12 @@ export const getAlertById = async (req: Request, res: Response) => {
 };
 
 export const createAlert = async (req: Request, res: Response) => {
+    console.log(`[ALERT] createAlert called by user: ${req.user?.userId}`);
     try {
-        const alert = req.body;
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized: No userId in token' });
+        const alert = { ...req.body, user_id: userId };
+        console.log('Received alert payload:', alert); // Log the request body for debugging
         const [result] = await pool.query('INSERT INTO alert SET ?', [alert]);
         const insertResult = result as ResultSetHeader;
         res.status(201).json({ alert_id: insertResult.insertId, ...alert });
@@ -37,10 +47,13 @@ export const createAlert = async (req: Request, res: Response) => {
 };
 
 export const updateAlert = async (req: Request, res: Response) => {
+    console.log(`[ALERT] updateAlert called by user: ${req.user?.userId}, alertId: ${req.params.id}`);
     try {
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized: No userId in token' });
         const { id } = req.params;
         const alert = req.body;
-        const [result] = await pool.query('UPDATE alert SET ? WHERE alert_id = ?', [alert, id]);
+        const [result] = await pool.query('UPDATE alert SET ? WHERE alert_id = ? AND user_id = ?', [alert, id, userId]);
         const updateResult = result as ResultSetHeader;
         if (updateResult.affectedRows === 0) return res.status(404).json({ message: 'Alert not found' });
         res.json({ alert_id: id, ...alert });
@@ -50,9 +63,12 @@ export const updateAlert = async (req: Request, res: Response) => {
 };
 
 export const deleteAlert = async (req: Request, res: Response) => {
+    console.log(`[ALERT] deleteAlert called by user: ${req.user?.userId}, alertId: ${req.params.id}`);
     try {
+        const userId = req.user?.userId;
+        if (!userId) return res.status(401).json({ message: 'Unauthorized: No userId in token' });
         const { id } = req.params;
-        const [result] = await pool.query('DELETE FROM alert WHERE alert_id = ?', [id]);
+        const [result] = await pool.query('DELETE FROM alert WHERE alert_id = ? AND user_id = ?', [id, userId]);
         const deleteResult = result as ResultSetHeader;
         if (deleteResult.affectedRows === 0) return res.status(404).json({ message: 'Alert not found' });
         res.json({ message: 'Alert deleted' });

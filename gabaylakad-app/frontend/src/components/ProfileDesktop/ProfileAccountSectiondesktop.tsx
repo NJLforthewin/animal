@@ -491,7 +491,7 @@ const ProfileAccountSectiondesktop: React.FC<ProfileAccountSectiondesktopProps> 
               <svg width="18" height="18" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3v4M8 3v4m-4 4h16"/></svg>
               Device ID
             </span>
-            <span style={{ color: '#444', fontWeight: 500 }}>{profile?.device_id || '-'}</span>
+            <span style={{ color: '#444', fontWeight: 500 }}>{profile?.device_serial_number || '-'}</span>
           </div>
         </div>
         {/* Last Updated Timestamp */}

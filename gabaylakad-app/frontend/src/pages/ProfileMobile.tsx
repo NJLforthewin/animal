@@ -1,10 +1,44 @@
-import React, { useState } from 'react';
-import '../styles/profile-mobile.css';
-import AvatarCircle from '../components/AvatarCircle';
-import BaseModal from '../components/BaseModal';
+import React, { useState, useEffect } from 'react';
+// import '../styles/profile-mobile.css'; // Removed, styles are inline with MUI
+import {
+  Box,
+  Paper,
+  Stack,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
+  Avatar,
+  Badge,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  // Grid, // Removed Grid
+  TextField,
+  Switch,
+  Typography,
+} from '@mui/material';
+
+// Import MUI Icons
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import PersonalInjuryIcon from '@mui/icons-material/PersonalInjury';
+import LanguageIcon from '@mui/icons-material/Language';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import LockIcon from '@mui/icons-material/Lock';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import PhonelinkIcon from '@mui/icons-material/Phonelink';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+
+// Assuming these are custom, complex modals
 import SecurityModal from '../components/SecurityModal';
 import ProfileModal from '../components/ProfileModal';
 
+// We replace BaseModal and AvatarCircle with MUI components
 
 interface ProfileMobileProps {
   profile: any;
@@ -17,7 +51,7 @@ interface ProfileMobileProps {
   defaultAvatars: string[];
   setEditMode: (edit: boolean) => void;
   setMobileForm: (form: any) => void;
-  setAvatarPreview: (url: string) => void;
+  setAvatarPreview: (url: string | null) => void; // Allow null
   setShowAvatarPicker: (show: boolean) => void;
   onUpdate: (e: React.FormEvent, closeModal?: () => void) => Promise<void>;
   originalAvatar: string | null;
@@ -52,82 +86,151 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
   // Local avatar state for ProfileModal preview
   const [profileModalAvatar, setProfileModalAvatar] = useState<string | null>(null);
 
-  // Navigation items
+  useEffect(() => {
+    // Sync local avatar preview when prop changes
+    setProfileModalAvatar(avatarPreview || profile?.avatar || defaultAvatars[0]);
+  }, [avatarPreview, profile, defaultAvatars]);
+
+  // Navigation items with MUI icons
   const navItems = [
     { label: 'Account', isLabel: true },
-    { label: 'Profile', icon: 'fas fa-user-edit', onClick: () => {
+    { label: 'Profile', icon: <ManageAccountsIcon />, onClick: () => {
       setProfileModalAvatar(avatarPreview || profile?.avatar || defaultAvatars[0]);
       setShowProfileModal(true);
     } },
-    { label: 'Patient Information', icon: 'fas fa-user-injured', onClick: () => {
+    { label: 'Patient Information', icon: <PersonalInjuryIcon />, onClick: () => {
       setShowPatientModal(true);
     } },
-    { label: 'Preferences', isLabel: true },
-    { label: 'Language', icon: 'fas fa-language', onClick: () => {/* language logic */} },
-    { label: 'Dark Mode', icon: 'fas fa-moon', onClick: () => {/* dark mode logic */}, isToggle: true },
-    { label: 'Settings', isLabel: true },
-    { label: 'Security', icon: 'fas fa-lock', onClick: () => {
-      setShowSecurityModal(true);
-    } },
-    { label: 'Notifications', icon: 'fas fa-bell', onClick: () => {/* notifications logic */} },
-    { label: 'Device Information', icon: 'fas fa-microchip', onClick: () => {
+    { label: 'Device Information', icon: <PhonelinkIcon />, onClick: () => {
       setShowDeviceModal(true);
     } },
+    { label: 'Preferences', isLabel: true },
+    { label: 'Language', icon: <LanguageIcon />, onClick: () => {/* language logic */} },
+    { label: 'Dark Mode', icon: <Brightness4Icon />, onClick: () => {/* dark mode logic */}, isToggle: true },
+    { label: 'Settings', isLabel: true },
+    { label: 'Security', icon: <LockIcon />, onClick: () => {
+      setShowSecurityModal(true);
+    } },
+    { label: 'Notifications', icon: <NotificationsIcon />, onClick: () => {/* notifications logic */} },
   ];
 
+  const currentAvatar = avatarPreview || profile?.avatar || defaultAvatars[0];
+
+  const handleCancelAvatar = () => {
+    setShowAvatarPicker(false);
+    setAvatarPreview(originalAvatar || profile?.avatar || null);
+    setProfileModalAvatar(originalAvatar || profile?.avatar || null);
+  };
 
   return (
-    <div style={{ height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ minHeight: '100vh', overflow: 'hidden', bgcolor: 'grey.50' }}>
       {/* Avatar section */}
-      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-        <div style={{ position: 'relative', width: 100, height: 100 }}>
-          <AvatarCircle src={avatarPreview || profile?.avatar || defaultAvatars[0]} size={100} />
-          {editMode && (
-            <button type="button" aria-label="Change Avatar" style={{ position: 'absolute', top: 4, right: 4, background: '#fff', border: '1.5px solid #2980b9', borderRadius: '50%', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(44,62,80,0.10)', cursor: 'pointer', zIndex: 2 }} onClick={() => setShowAvatarPicker(true)}>
-              <i className="fas fa-pencil-alt" style={{ color: '#2980b9', fontSize: '1.35rem' }}></i>
-            </button>
-          )}
-        </div>
-        {showAvatarPicker && (
-          <BaseModal open={showAvatarPicker} onClose={() => setShowAvatarPicker(false)} title="Choose Your Avatar" zIndex={10001}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
-              {/* Preview Section */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 10 }}>
-                <div style={{ fontSize: '0.95rem', color: '#232946', marginBottom: 6 }}>Preview</div>
-                <img src={profileModalAvatar || avatarPreview || defaultAvatars[0]} alt="Avatar Preview" style={{ width: 80, height: 80, borderRadius: '50%', border: '3px solid #2980b9', objectFit: 'cover', marginBottom: 8 }} />
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
-                {defaultAvatars.map((url, idx) => (
-                  <img key={idx} src={url} alt={`Avatar ${idx+1}`} style={{ width: 64, height: 64, borderRadius: '50%', border: (profileModalAvatar || avatarPreview) === url ? '3px solid #2980b9' : '2px solid #e0e0e0', cursor: 'pointer', objectFit: 'cover', transition: 'border 0.2s' }} onClick={() => { setAvatarPreview(url); setProfileModalAvatar(url); }} />
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 12, marginTop: 18 }}>
-                <button style={{ background: '#2980b9', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 2.2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => setShowAvatarPicker(false)}>Confirm</button>
-                <button style={{ background: '#e0e6ed', color: '#232946', border: 'none', borderRadius: 8, padding: '0.7rem 2.2rem', fontWeight: 600, fontSize: '1rem', cursor: 'pointer' }} onClick={() => { setShowAvatarPicker(false); setAvatarPreview(originalAvatar || profile?.avatar || null); setProfileModalAvatar(originalAvatar || profile?.avatar || null); }}>Cancel</button>
-              </div>
-            </div>
-          </BaseModal>
-        )}
-      </div>
+      <Stack alignItems="center" sx={{ pt: 4, pb: 2 }}>
+        {/* ----- FIX: Removed the Badge/IconButton from here -----
+          The edit pencil icon should only be *inside* the ProfileModal,
+          not on this main page avatar.
+        */}
+        <Avatar
+          src={currentAvatar}
+          alt="Avatar"
+          sx={{
+            width: 100,
+            height: 100,
+            border: '2px solid',
+            borderColor: 'divider'
+          }}
+        />
+        {/* ----- END FIX ----- */}
+      </Stack>
+
+      {/* Avatar Picker Modal (Refactored BaseModal) */}
+      <Dialog 
+        open={showAvatarPicker} 
+        onClose={() => setShowAvatarPicker(false)} 
+        fullWidth 
+        maxWidth="xs"
+        // ----- FIX: Added zIndex to appear on top of ProfileModal -----
+        sx={{ zIndex: 10000 }} 
+      >
+        <DialogTitle>Choose Your Avatar</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} alignItems="center" sx={{ pt: 1 }}>
+            {/* Preview Section */}
+            <Stack alignItems="center" spacing={1}>
+              <Typography variant="caption" color="text.secondary">Preview</Typography>
+              <Avatar
+                src={profileModalAvatar || avatarPreview || defaultAvatars[0]}
+                alt="Avatar Preview"
+                sx={{
+                  width: 80,
+                  height: 80,
+                  border: '3px solid',
+                  borderColor: 'primary.main',
+                }}
+              />
+            </Stack>
+            
+            {/* Avatar Selection Grid (Replaced Grid with Stack) */}
+            <Stack 
+              direction="row" 
+              spacing={2} 
+              justifyContent="center" 
+              flexWrap="wrap" // Allow wrapping
+            >
+              {defaultAvatars.map((url, idx) => (
+                <Avatar
+                  key={idx}
+                  src={url}
+                  alt={`Avatar ${idx + 1}`}
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    border: '3px solid',
+                    borderColor: (profileModalAvatar || avatarPreview) === url ? 'primary.main' : 'divider',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onClick={() => {
+                    setAvatarPreview(url);
+                    setProfileModalAvatar(url);
+                  }}
+                />
+              ))}
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCancelAvatar} color="inherit">Cancel</Button>
+          <Button onClick={() => setShowAvatarPicker(false)} variant="contained">Confirm</Button>
+        </DialogActions>
+      </Dialog>
+
 
       {/* Navigation */}
-      <div style={{ width: '100%', maxWidth: 340, margin: '0 auto', background: '#fff', borderRadius: 12, boxShadow: '0 6px 20px rgba(44,62,80,0.08)', padding: 18 }}>
-        {navItems.map((item, idx) => (
-          item.isLabel ? (
-            <div key={item.label} style={{ fontWeight: 700, fontSize: '1.08rem', color: '#232946', margin: '1.1rem 0 0.7rem 0', pointerEvents: 'none' }}>{item.label}</div>
-          ) : (
-            <button key={item.label} type="button" onClick={item.onClick} style={{ width: '100%', display: 'flex', alignItems: 'center', background: 'rgba(41,128,185,0.08)', border: 'none', borderRadius: 10, padding: '0.8rem 1.1rem', fontSize: '1.01rem', color: '#232946', fontWeight: 600, gap: 12, cursor: 'pointer', transition: 'background 0.18s', marginBottom: 6 }}>
-              <i className={item.icon} aria-hidden style={{ fontSize: '1.1rem', width: 24, textAlign: 'center', color: '#2980b9' }}></i>
-              <span>{item.label}</span>
-              {item.isToggle && (
-                <input type="checkbox" style={{ marginLeft: 'auto', accentColor: '#232946' }} />
-              )}
-            </button>
-          )
-        ))}
-      </div>
+      <Paper elevation={2} sx={{ maxWidth: 380, mx: 'auto', borderRadius: 3, p: 1 }}>
+        <List component="nav">
+          {navItems.map((item, idx) => (
+            item.isLabel ? (
+              <ListSubheader key={idx} sx={{ bgcolor: 'transparent' }}>
+                {item.label}
+              </ListSubheader>
+            ) : item.isToggle ? (
+              <ListItem key={idx}>
+                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+                <Switch edge="end" onChange={item.onClick} />
+              </ListItem>
+            ) : (
+              <ListItemButton key={idx} onClick={item.onClick} sx={{ borderRadius: 2, mb: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            )
+          ))}
+        </List>
+      </Paper>
 
-      {/* Profile Modal (view/edit toggle, avatar, consistent modal design) */}
+      {/* Profile Modal (External) */}
       <ProfileModal
         open={showProfileModal}
         onClose={() => {
@@ -140,17 +243,16 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
         onAvatarClick={() => setShowAvatarPicker(true)}
         isEditing={profileEditMode}
         onEditToggle={() => {
-  if (profileEditMode) {
-    // If cancelling edit, reset form to original profile values
-    setMobileForm({
-      first_name: profile?.first_name || '',
-      last_name: profile?.last_name || '',
-      email: profile?.email || '',
-      phone: profile?.phone_number || '',
-    });
-  }
-  setProfileEditMode((v) => !v);
-}}
+          if (profileEditMode) {
+            setMobileForm({
+              first_name: profile?.first_name || '',
+              last_name: profile?.last_name || '',
+              email: profile?.email || '',
+              phone: profile?.phone_number || '',
+            });
+          }
+          setProfileEditMode((v) => !v);
+        }}
         form={mobileForm}
         setForm={setMobileForm}
         loading={loading}
@@ -163,49 +265,71 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
         zIndex={9999}
       />
 
-      {/* Patient Information Modal */}
-      <BaseModal open={showPatientModal} onClose={() => setShowPatientModal(false)} title="Patient Information">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem' }}>
-            <div>
-              <label className="profile-info-label">Full Name</label>
-              <input className="profile-info-value" type="text" value={profile?.blind_full_name || '-'} disabled style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 8, border: '1px solid #e0e0e0', fontSize: '1.08rem', fontWeight: 500, background: '#f7f7f7', color: '#232946' }} />
-            </div>
-            <div>
-              <label className="profile-info-label">Phone Number</label>
-              <input className="profile-info-value" type="text" value={profile?.blind_phone_number || '-'} disabled style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 8, border: '1px solid #e0e0e0', fontSize: '1.08rem', fontWeight: 500, background: '#f7f7f7', color: '#232946' }} />
-            </div>
-            <div>
-              <label className="profile-info-label">Age</label>
-              <input className="profile-info-value" type="text" value={profile?.blind_age || '-'} disabled style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 8, border: '1px solid #e0e0e0', fontSize: '1.08rem', fontWeight: 500, background: '#f7f7f7', color: '#232946' }} />
-            </div>
-            <div>
-              <label className="profile-info-label">Impairment Level</label>
-              <input className="profile-info-value" type="text" value={profile?.impairment_level || '-'} disabled style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 8, border: '1px solid #e0e0e0', fontSize: '1.08rem', fontWeight: 500, background: '#f7f7f7', color: '#232946' }} />
-            </div>
-          </div>
-        </div>
-      </BaseModal>
+      {/* Patient Information Modal (Refactored BaseModal) */}
+      <Dialog open={showPatientModal} onClose={() => setShowPatientModal(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Patient Information</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField
+              label="Full Name"
+              value={profile?.blind_full_name || '-'}
+              fullWidth
+              disabled
+            />
+            <TextField
+              label="Phone Number"
+              value={profile?.blind_phone_number || '-'}
+              fullWidth
+              disabled
+            />
+            <TextField
+              label="Age"
+              value={profile?.blind_age || '-'}
+              fullWidth
+              disabled
+            />
+            <TextField
+              label="Impairment Level"
+              value={profile?.impairment_level || '-'}
+              fullWidth
+              disabled
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPatientModal(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* Device Information Modal */}
-      <BaseModal open={showDeviceModal} onClose={() => setShowDeviceModal(false)} title="Device Information">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem' }}>
-            <div>
-              <label className="profile-info-label">Relationship</label>
-              <input className="profile-info-value" type="text" value={profile?.relationship || '-'} disabled style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 8, border: '1px solid #e0e0e0', fontSize: '1.08rem', fontWeight: 500, background: '#f7f7f7', color: '#232946' }} />
-            </div>
-            <div>
-              <label className="profile-info-label">Device Serial Number</label>
-              <input className="profile-info-value" type="text" value={profile?.device_id || '-'} disabled style={{ width: '100%', padding: '0.7rem 1rem', borderRadius: 8, border: '1px solid #e0e0e0', fontSize: '1.08rem', fontWeight: 500, background: '#f7f7f7', color: '#232946' }} />
-            </div>
-          </div>
-        </div>
-      </BaseModal>
-      {/* Security Modal (Change Password, 2FA, Login Activity) */}
+      {/* Device Information Modal (Refactored BaseModal) */}
+      <Dialog open={showDeviceModal} onClose={() => setShowDeviceModal(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Device Information</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            <TextField
+              label="Relationship"
+              value={profile?.relationship || '-'}
+              fullWidth
+              disabled
+            />
+            <TextField
+              label="Device Serial Number"
+              value={profile?.device_serial_number || '-'}
+              fullWidth
+              disabled
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeviceModal(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Security Modal (External) */}
       <SecurityModal open={showSecurityModal} onClose={() => setShowSecurityModal(false)} />
-    </div>
+    </Box>
   );
 };
 
 export default ProfileMobile;
+

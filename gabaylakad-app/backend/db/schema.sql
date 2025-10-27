@@ -1,11 +1,3 @@
--- === Location Tracking Enhancements (Real-time Map Support) ===
-
--- Telemetry columns for richer location data are now part of CREATE TABLE location_log below.
--- Index idx_location_device_timestamp is already present in CREATE TABLE location_log and does not need to be created separately.
--- View for latest location per device is defined in the dashboard aggregation section below.
--- Finalized GabayLakad Database Schema
--- Run on MySQL server. Assumes user has sufficient privileges.
-
 CREATE DATABASE IF NOT EXISTS gabay_db;
 USE gabay_db;
 
@@ -13,76 +5,100 @@ USE gabay_db;
 -- Table: user
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `user` (
-  user_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  blind_full_name VARCHAR(100),
-  blind_age INT(3),
-  blind_phone_number VARCHAR(20),
-  first_name VARCHAR(100) NOT NULL,
-  last_name VARCHAR(100) NOT NULL,
-  email VARCHAR(100) NOT NULL UNIQUE,
-  phone_number VARCHAR(20) NOT NULL,
-  impairment_level VARCHAR(50) NOT NULL,
-  device_id VARCHAR(100) DEFAULT NULL,
-  password VARCHAR(255) NOT NULL,
-  is_verified TINYINT(1) NOT NULL DEFAULT 0,
-  verification_code VARCHAR(10),
-  reset_token VARCHAR(255) DEFAULT NULL,
-  reset_token_expires DATETIME DEFAULT NULL,
-  avatar VARCHAR(255) DEFAULT NULL,
-  relationship VARCHAR(50) DEFAULT NULL,
-  refresh_token VARCHAR(255) DEFAULT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  user_id int NOT NULL AUTO_INCREMENT,
+  name varchar(100) NOT NULL,
+  blind_full_name varchar(100) DEFAULT NULL,
+  blind_age int DEFAULT NULL,
+  blind_phone_number varchar(20) DEFAULT NULL,
+  first_name varchar(100) NOT NULL,
+  last_name varchar(100) NOT NULL,
+  email varchar(100) NOT NULL,
+  phone_number varchar(20) NOT NULL,
+  impairment_level varchar(50) NOT NULL,
+  device_id int DEFAULT NULL,
+  password varchar(255) NOT NULL,
+  is_verified tinyint(1) NOT NULL DEFAULT '0',
+  verification_code varchar(10) DEFAULT NULL,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  refresh_token varchar(255) DEFAULT NULL,
+  relationship varchar(50) DEFAULT NULL,
+  reset_token varchar(255) DEFAULT NULL,
+  reset_token_expires datetime DEFAULT NULL,
+  avatar varchar(255) DEFAULT NULL,
+  PRIMARY KEY (user_id),
+  UNIQUE KEY email (email)
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- ----------------------------------------------------
+-- Table: device_status
+-- ----------------------------------------------------
 
+CREATE TABLE IF NOT EXISTS device_status (
+  device_id INT NOT NULL PRIMARY KEY,
+  obstacle_distance FLOAT,
+  obstacle_severity VARCHAR(10),
+  gsm_connected TINYINT(1),
+  gsm_signal_strength INT,
+  button_action VARCHAR(10),
+  vibration_pattern INT,
+  vibration_duration INT,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_status_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- ----------------------------------------------------
 -- Table: contact
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS contact (
-  contact_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  phone_number VARCHAR(20) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  google_id VARCHAR(128) DEFAULT NULL,
-  email VARCHAR(100) DEFAULT NULL,
-  is_active TINYINT(1) NOT NULL DEFAULT 1,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  contact_id int NOT NULL AUTO_INCREMENT,
+  name varchar(100) NOT NULL,
+  phone_number varchar(20) NOT NULL,
+  password varchar(255) NOT NULL,
+  google_id varchar(128) DEFAULT NULL,
+  email varchar(100) DEFAULT NULL,
+  is_active bit(1) NOT NULL DEFAULT b'1',
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (contact_id),
+  UNIQUE KEY phone_number (phone_number)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: device
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS device (
-  device_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  serial_number VARCHAR(100) NOT NULL UNIQUE,
-  is_active TINYINT(1) NOT NULL DEFAULT 1,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  device_id INT NOT NULL AUTO_INCREMENT,
+  serial_number VARCHAR(100) NOT NULL,
+  is_active bit(1) NOT NULL DEFAULT b'1',
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (device_id),
+  UNIQUE KEY serial_number (serial_number)
+) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: alert
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS alert (
-  alert_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  device_id INT(8) NOT NULL,
-serial_number VARCHAR(100) NULL,
-  user_id INT(8) NOT NULL,
-  alert_type VARCHAR(50) NOT NULL,
-  alert_description TEXT NOT NULL,
-  is_resolved TINYINT(1) DEFAULT 0,
-  resolved_at DATETIME DEFAULT NULL,
-  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_alert_device_id (device_id),
-  INDEX idx_alert_user_id (user_id),
-  INDEX idx_alert_type_timestamp (alert_type, timestamp),
-  INDEX idx_alert_timestamp (timestamp),
-  CONSTRAINT fk_alert_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE,
-  CONSTRAINT fk_alert_user FOREIGN KEY (user_id) REFERENCES `user`(user_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  alert_id int NOT NULL AUTO_INCREMENT,
+  device_id int NOT NULL,
+  serial_number varchar(100) DEFAULT NULL,
+  user_id int NOT NULL,
+  alert_type varchar(50) NOT NULL,
+  alert_description text NOT NULL,
+  trigger_type varchar(50) DEFAULT NULL,
+  timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  is_resolved bit(1) DEFAULT b'0',
+  resolved_at datetime DEFAULT NULL,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (alert_id),
+  KEY idx_alert_device_id (device_id),
+  KEY idx_alert_user_id (user_id),
+  KEY idx_alert_type_timestamp (alert_type, timestamp),
+  CONSTRAINT alert_ibfk_1 FOREIGN KEY (device_id) REFERENCES device (device_id),
+  CONSTRAINT alert_ibfk_2 FOREIGN KEY (user_id) REFERENCES user (user_id),
+  CONSTRAINT fk_alert_device FOREIGN KEY (device_id) REFERENCES device (device_id),
+  CONSTRAINT fk_alert_user FOREIGN KEY (user_id) REFERENCES user (user_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1418 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: gps_tracking
@@ -104,100 +120,116 @@ serial_number VARCHAR(100) NULL,
 -- Table: location_log
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS location_log (
-  log_id INT(8) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  device_id INT(8) NOT NULL,
-serial_number VARCHAR(100) NULL,
-  latitude FLOAT(10,6) NOT NULL,
-  longitude FLOAT(10,6) NOT NULL,
-  altitude FLOAT NULL,
-  speed FLOAT NULL,
-  heading FLOAT NULL,
-  accuracy FLOAT NULL,
-  signal_strength INT NULL,
-  street_name VARCHAR(255) NULL,
-  city_name VARCHAR(255) NULL,
-  place_name VARCHAR(255) NULL,
-  context_tag VARCHAR(255) NULL,
-  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_loc_device_time (device_id, timestamp),
-  INDEX idx_loc_latitude (latitude),
-  INDEX idx_loc_timestamp (timestamp),
-  CONSTRAINT fk_location_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  log_id int NOT NULL AUTO_INCREMENT,
+  device_id int NOT NULL,
+  serial_number varchar(100) DEFAULT NULL,
+  latitude float(10,6) NOT NULL,
+  longitude float(10,6) NOT NULL,
+  timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  altitude float DEFAULT NULL,
+  speed float DEFAULT NULL,
+  heading float DEFAULT NULL,
+  accuracy float DEFAULT NULL,
+  signal_strength int DEFAULT NULL,
+  street_name varchar(255) DEFAULT NULL,
+  city_name varchar(255) DEFAULT NULL,
+  place_name varchar(255) DEFAULT NULL,
+  context_tag varchar(255) DEFAULT NULL,
+  poi_name varchar(255) DEFAULT NULL,
+  poi_type varchar(100) DEFAULT NULL,
+  poi_distance_m int DEFAULT NULL,
+  poi_distance_km float DEFAULT NULL,
+  poi_lat float(10,6) DEFAULT NULL,
+  poi_lon float(10,6) DEFAULT NULL,
+  poi_distance float DEFAULT NULL,
+  PRIMARY KEY (log_id),
+  KEY idx_loc_device_id (device_id),
+  KEY idx_loc_latitude (latitude),
+  KEY idx_loc_timestamp (timestamp),
+  KEY idx_location_device_timestamp (device_id, timestamp),
+  CONSTRAINT fk_location_device FOREIGN KEY (device_id) REFERENCES device (device_id),
+  CONSTRAINT location_log_ibfk_1 FOREIGN KEY (device_id) REFERENCES device (device_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1518 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: sensor_log
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS sensor_log (
-  sens_log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  device_id INT(8) NOT NULL,
-serial_number VARCHAR(100) NULL,
-  sensor_type VARCHAR(64) NOT NULL,
-  sensor_value DECIMAL(10,4) DEFAULT NULL,
-  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_sensor_device_id (device_id),
-  INDEX idx_sensor_type_timestamp (sensor_type, timestamp),
-  INDEX idx_sensor_timestamp (timestamp),
-  CONSTRAINT fk_sensor_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  sens_log_id int NOT NULL AUTO_INCREMENT,
+  device_id int NOT NULL,
+  sensor_type varchar(50) NOT NULL,
+  sensor_value decimal(10,4) DEFAULT NULL,
+  timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (sens_log_id),
+  KEY idx_sensor_device_id (device_id),
+  KEY idx_sensor_type_timestamp (sensor_type, timestamp),
+  CONSTRAINT fk_sensor_device FOREIGN KEY (device_id) REFERENCES device (device_id),
+  CONSTRAINT sensor_log_ibfk_1 FOREIGN KEY (device_id) REFERENCES device (device_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: user_contact
 -- (associative table connecting users and contact entries)
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS user_contact (
-  user_contact_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  contact_id INT(8) NOT NULL,
-  user_id INT(8) NOT NULL,
-  relationship VARCHAR(50) NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_uc_contact_id (contact_id),
-  INDEX idx_uc_user_id (user_id),
-  CONSTRAINT fk_uc_contact FOREIGN KEY (contact_id) REFERENCES contact(contact_id) ON DELETE CASCADE,
-  CONSTRAINT fk_uc_user FOREIGN KEY (user_id) REFERENCES `user`(user_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  user_contact_id int NOT NULL AUTO_INCREMENT,
+  contact_id int NOT NULL,
+  user_id int NOT NULL,
+  relationship varchar(50) NOT NULL,
+  created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_contact_id),
+  KEY idx_uc_contact_id (contact_id),
+  KEY idx_uc_user_id (user_id),
+  KEY idx_uc_relationship (relationship),
+  CONSTRAINT user_contact_ibfk_1 FOREIGN KEY (contact_id) REFERENCES contact (contact_id),
+  CONSTRAINT user_contact_ibfk_2 FOREIGN KEY (user_id) REFERENCES user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: battery_status (IoT telemetry)
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS battery_status (
-  battery_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  device_id INT NOT NULL,
-  battery_level DECIMAL(5,2) DEFAULT NULL,
-  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_battery_device_timestamp (device_id, timestamp),
-  CONSTRAINT fk_battery_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  battery_id int NOT NULL AUTO_INCREMENT,
+  device_id int NOT NULL,
+  battery_level decimal(5,2) NOT NULL,
+  timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (battery_id),
+  KEY idx_battery_device (device_id),
+  KEY idx_battery_timestamp (timestamp),
+  KEY idx_battery_device_timestamp (device_id, timestamp),
+  CONSTRAINT battery_status_ibfk_1 FOREIGN KEY (device_id) REFERENCES device (device_id),
+  CONSTRAINT fk_battery_device FOREIGN KEY (device_id) REFERENCES device (device_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1519 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: night_reflector_status (IoT telemetry)
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS night_reflector_status (
-  reflector_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  device_id INT NOT NULL,
-  status ENUM('on','off') NOT NULL,
-  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_reflector_device_time (device_id, timestamp),
-  CONSTRAINT fk_reflector_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  reflector_id int NOT NULL AUTO_INCREMENT,
+  device_id int NOT NULL,
+  status enum('on','off') NOT NULL,
+  timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (reflector_id),
+  KEY idx_reflector_device_time (device_id, timestamp),
+  CONSTRAINT fk_reflector_device FOREIGN KEY (device_id) REFERENCES device (device_id),
+  CONSTRAINT night_reflector_status_ibfk_1 FOREIGN KEY (device_id) REFERENCES device (device_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1478 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Table: activity_log
 -- ----------------------------------------------------
 CREATE TABLE IF NOT EXISTS activity_log (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  device_id INT NOT NULL,
-  event_type VARCHAR(64) NOT NULL,
-  payload JSON DEFAULT NULL,
-  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_activity_device_time (device_id, timestamp),
-  CONSTRAINT fk_activity_device FOREIGN KEY (device_id) REFERENCES device(device_id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  id int NOT NULL AUTO_INCREMENT,
+  device_id int NOT NULL,
+  event_type varchar(64) NOT NULL,
+  payload json DEFAULT NULL,
+  timestamp datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_activity_device_time (device_id, timestamp),
+  CONSTRAINT activity_log_ibfk_1 FOREIGN KEY (device_id) REFERENCES device (device_id)
+) ENGINE=InnoDB AUTO_INCREMENT=1417 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- ----------------------------------------------------
 -- Helpful view: unify gps_tracking + location_log (if still useful)

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticateToken } from '../middleware/authMiddleware';
 import {
   getAllBatteries,
   getBatteryById,
@@ -9,10 +10,10 @@ import {
 
 const router = Router();
 
-router.get('/', getAllBatteries);
-router.get('/:id', getBatteryById);
-router.post('/', createBattery);
-router.put('/:id', updateBattery);
-router.delete('/:id', deleteBattery);
+router.get('/', authenticateToken, getAllBatteries);
+router.get('/:id', authenticateToken, getBatteryById);
+router.post('/', authenticateToken, createBattery);
+router.put('/:id', authenticateToken, updateBattery);
+router.delete('/:id', authenticateToken, deleteBattery);
 
 export default router;

@@ -40,18 +40,18 @@ const ProfileDesktop: React.FC<ProfileDesktopProps> = (props) => {
     card: '#fff',
     secondary: '#e0e6ed',
     error: '#e74c3c',
-    muted: '#b0b0b0',
+    // muted removed
   };
   const fontFamily = 'Segoe UI, Open Sans, Roboto, Arial, sans-serif';
   if (!open) return null;
 
   // Main modal backdrop
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(44,62,80,0.18)', backdropFilter: 'blur(4px)', transition: 'opacity 0.25s' }}>
+  <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(44,62,80,0.18)', backdropFilter: 'blur(4px)', transition: 'opacity 0.25s' }}>
       {/* Main Modal Container (Account base layer) */}
-      <div style={{ minWidth: 720, maxWidth: 800, width: '90vw', maxHeight: '90vh', background: palette.card, borderRadius: 18, boxShadow: '0 6px 32px rgba(44,62,80,0.13)', fontFamily, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.25s', position: 'relative', zIndex: 10000, filter: overlay !== 'none' ? 'brightness(0.92)' : 'none', transition: 'filter 0.18s' }}>
+  <div style={{ minWidth: 720, maxWidth: 800, width: '90vw', maxHeight: '90vh', background: palette.card, borderRadius: 18, boxShadow: '0 6px 32px rgba(44,62,80,0.13)', fontFamily, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.25s', position: 'relative', zIndex: 10000, filter: overlay !== 'none' ? 'brightness(0.92)' : 'none', transition: 'filter 0.18s' }}>
         {/* Modal Header with Tabs and Close */}
-        <div style={{ display: 'flex', alignItems: 'center', borderBottom: `1.5px solid ${palette.secondary}`, padding: '0.7rem 2.2rem', background: '#f7faff', position: 'relative', minHeight: 62 }}>
+  <div style={{ display: 'flex', alignItems: 'center', borderBottom: `1.5px solid ${palette.secondary}`, padding: '0.7rem 2.2rem', background: '#f7faff', position: 'relative', minHeight: 62 }}>
           <div style={{ display: 'flex', gap: 40 }}>
             <button onClick={() => setOverlay('none')} style={{ background: 'none', border: 'none', color: overlay === 'none' ? palette.accent : palette.primary, fontWeight: 700, fontSize: '1.18rem', cursor: 'pointer', padding: 0, borderBottom: overlay === 'none' ? `3px solid ${palette.accent}` : 'none', transition: 'color 0.18s, border-bottom 0.18s', marginBottom: -2 }}>Account</button>
             <button onClick={() => setOverlay('preferences')} disabled={overlay === 'settings'} style={{ background: 'none', border: 'none', color: overlay === 'preferences' ? palette.accent : palette.primary, fontWeight: 700, fontSize: '1.18rem', cursor: overlay === 'settings' ? 'not-allowed' : 'pointer', opacity: overlay === 'settings' ? 0.5 : 1, padding: 0, borderBottom: overlay === 'preferences' ? `3px solid ${palette.accent}` : 'none', transition: 'color 0.18s, border-bottom 0.18s', marginBottom: -2 }}>Preferences</button>
@@ -60,7 +60,7 @@ const ProfileDesktop: React.FC<ProfileDesktopProps> = (props) => {
           <button aria-label="Close" onClick={() => setOpen(false)} style={{ position: 'absolute', top: 18, right: 22, background: 'none', border: 'none', fontSize: 28, color: palette.primary, cursor: 'pointer', fontWeight: 700, zIndex: 10001 }}>&times;</button>
         </div>
         {/* Account Section (always rendered as base layer) */}
-        <div style={{ flex: 1, padding: '2.2rem 2.5rem', overflowY: 'auto', background: palette.card }}>
+  <div style={{ flex: 1, padding: '2.2rem 2.5rem', overflowY: 'auto', background: palette.card }}>
           <ProfileAccountSectiondesktop
             {...props}
             fetchProfile={props.fetchProfile}
@@ -69,6 +69,7 @@ const ProfileDesktop: React.FC<ProfileDesktopProps> = (props) => {
         {/* Avatar Picker Modal */}
         {props.showAvatarPicker && (
           <AvatarPicker
+            open={props.showAvatarPicker}
             defaultAvatars={props.defaultAvatars}
             avatarPreview={props.avatarPreview}
             setAvatarPreview={props.setAvatarPreview}

@@ -1,28 +1,48 @@
 import React from 'react';
-// ...existing code...
-import LoadingValue from './LoadingValue';
-import '../styles/dashboard-mobile.css';
+import { Paper, Stack, Typography } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn'; // Icon for location
+import LoadingValue from './LoadingValue'; // Assuming this component is compatible
 
 const MobileLocation: React.FC<{ locationLabel?: string | null; lastSeen?: string | null; loading?: boolean }> = ({ locationLabel, lastSeen, loading = false }) => {
      const street = locationLabel && locationLabel.trim() ? locationLabel : '';
      const place = lastSeen && lastSeen.trim() ? lastSeen : '';
+
   return (
-    <div className="dashboard-mobile-card mobile-card-pos">
-      <div className="card-title-row">
-        <div className="card-title">LOCATION</div>
-        <div className="card-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: 22, height: 22 }}><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
-        </div>
-      </div>
-      <div className="field-row">
-        <div className="field-label">Street</div>
-           <LoadingValue loading={loading} value={street} className="field-value street primary" title={street} compact />
-      </div>
-      <div className="field-row">
-        <div className="field-label">Place</div>
-           <LoadingValue loading={loading} value={place} className="field-value" title={place} compact />
-      </div>
-    </div>
+    <Paper 
+      elevation={2} 
+      sx={{ 
+        p: 2, 
+        borderRadius: 3, 
+        height: 180, 
+        minHeight: 180, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'space-between' 
+      }}
+    >
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+        <Typography variant="body2" fontWeight="600" color="text.secondary">
+          LOCATION
+        </Typography>
+        <LocationOnIcon color="primary" />
+      </Stack>
+      <Stack spacing={0.5}>
+        <Typography variant="caption" color="text.secondary">
+          Street
+        </Typography>
+        <Typography variant="h6" fontWeight="600" noWrap title={street} component="span">
+          <LoadingValue loading={loading} value={street} />
+        </Typography>
+      </Stack>
+      <Stack spacing={0.5} sx={{ mt: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          Place
+        </Typography>
+        <Typography variant="body2" noWrap title={place} component="span">
+          <LoadingValue loading={loading} value={place} />
+        </Typography>
+      </Stack>
+    </Paper>
   );
 };
 
