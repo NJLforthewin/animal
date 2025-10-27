@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Box,
   Paper,
@@ -25,7 +24,6 @@ import DashboardActivityCard from '../components/DashboardActivityCard';
 import DashboardEmergencyCard from '../components/DashboardEmergencyCard';
 import DashboardNightReflectorCard from '../components/DashboardNightReflectorCard';
 import DashboardActivityLogCard from '../components/DashboardActivityLogCard';
-import DashboardSensorCard from '../components/DashboardSensorCard';
 // import '../styles/dashboard-main.css'; // Removed
 // import '../styles/dashboard-mobile.css'; // Removed
 

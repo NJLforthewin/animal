@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
 
 // import Header from '../components/Header';
 import DashboardMobile from './DashboardMobile';
@@ -25,8 +24,6 @@ import {
   Divider
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import CakeIcon from '@mui/icons-material/Cake';
-import PhoneIcon from '@mui/icons-material/Phone';
 import SensorsIcon from '@mui/icons-material/Sensors';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 

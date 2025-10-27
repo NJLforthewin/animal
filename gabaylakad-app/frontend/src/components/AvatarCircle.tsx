@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Button, Stack, Box } from '@mui/material';
+import { Avatar, Button, Stack } from '@mui/material';
 
 // Define the props interface
 interface AvatarCircleProps {

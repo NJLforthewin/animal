@@ -12,7 +12,6 @@ import {
   DialogContent,
   CircularProgress,
   Box,
-  Divider,
   ListItemIcon,
 } from '@mui/material';
 import { Maximize2, X } from 'lucide-react'; 
@@ -22,7 +21,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import NotesIcon from '@mui/icons-material/Notes';
 
 // Assuming LoadingSpinner is a custom component
-import LoadingSpinner from './LoadingSpinner';
+// import LoadingSpinner from './LoadingSpinner';
 
 const fetchActivityLog = async () => {
   const res = await fetch('/api/dashboard/activitylog', {

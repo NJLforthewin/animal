@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback, useContext } from 'react'; // Added useContext
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import DeviceInfoModal, { DeviceInfo } from '../components/DeviceInfoModal';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { io, Socket } from 'socket.io-client';
-import { UserContext, UserType } from './Profile'; // Assuming UserContext is exported from Profile
 // import LocationHeaderResponsive from '../components/LocationHeaderResponsive'; // Removed
 import Header from '../components/Header'; // Use the standard MUI Header
 import { Box, Fab, Stack, Typography, Button } from '@mui/material'; // Import MUI components

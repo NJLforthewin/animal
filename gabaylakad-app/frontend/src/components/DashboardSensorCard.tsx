@@ -10,7 +10,6 @@ import {
   Box,
   ListItemIcon,
 } from '@mui/material';
-import FavoriteIcon from '@mui/icons-material/Favorite';
 import SensorsIcon from '@mui/icons-material/Sensors';
 
 const fetchSensorData = async () => {
