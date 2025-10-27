@@ -20,7 +20,6 @@ const deviceIcon = new L.Icon({
 });
 
 interface DeviceLocation {
-  device_id: string;
   serial_number: string;
   device_name: string;
   latitude: number;
@@ -39,21 +38,25 @@ const fetchAllLocations = async (): Promise<DeviceLocation[]> => {
   return Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
 };
 
+interface DeviceLocationWithLastSeen extends DeviceLocation {
+  lastSeen: number;
+}
+
 const LocationPage: React.FC = () => {
-  const [devices, setDevices] = useState<DeviceLocation[]>([]);
+  const [devices, setDevices] = useState<DeviceLocationWithLastSeen[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<any>(null); // Keep type as any for Leaflet ref
   const [modalOpen, setModalOpen] = useState(false);
   const [modalInfo, setModalInfo] = useState<DeviceInfo | null>(null);
   // Get user from context instead of fetching locally
-  const { user, setUser } = useContext(UserContext); // Get user and setUser from context
+  // const { user, setUser } = useContext(UserContext); // Removed unused context variables
 
   // Fetch all locations (REST fallback)
   const loadLocations = useCallback(async () => {
     try {
       const locs = await fetchAllLocations();
-      setDevices(locs);
+  setDevices(Array.isArray(locs) ? locs.map(d => ({ ...d, lastSeen: Date.now() })) : []);
     } catch (error) {
       console.error("Failed to load locations:", error);
       // Handle error appropriately, maybe show a snackbar
@@ -83,15 +86,16 @@ const LocationPage: React.FC = () => {
 
     socket.on('location_update', (data: DeviceLocation) => {
       // Basic validation
-      if (data && data.device_id && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+      if (data && data.serial_number && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
         setDevices((prev) => {
-          const idx = prev.findIndex((d) => d.device_id === data.device_id);
+          const now = Date.now();
+          const idx = prev.findIndex((d) => d.serial_number === data.serial_number);
           if (idx !== -1) {
             const updated = [...prev];
-            updated[idx] = { ...updated[idx], ...data }; // Merge updates
+            updated[idx] = { ...updated[idx], ...data, lastSeen: now };
             return updated;
           } else {
-            return [...prev, data]; // Add new device
+            return [...prev, { ...data, lastSeen: now }];
           }
         });
       } else {
@@ -116,7 +120,11 @@ const LocationPage: React.FC = () => {
 
   // Initial load via REST
   useEffect(() => {
-    loadLocations();
+    (async () => {
+      const locs = await loadLocations();
+      const now = Date.now();
+      setDevices(Array.isArray(locs) ? locs.map(d => ({ ...d, lastSeen: now })) : []);
+    })();
   }, [loadLocations]);
 
   // Manual refresh handler
@@ -126,10 +134,10 @@ const LocationPage: React.FC = () => {
   };
 
   // Show device info modal for a specific device
-  const handleInfoClick = async (deviceId: string) => {
+  const handleInfoClick = async (serialNumber: string) => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`/api/dashboard/device/${deviceId}`,
+      const res = await fetch(`/api/dashboard/device/serial/${serialNumber}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -181,7 +189,7 @@ const LocationPage: React.FC = () => {
         map.setView([firstDevice.latitude, firstDevice.longitude], 18, { animate: true });
       }
       // Show info for the first device
-      await handleInfoClick(firstDevice.device_id);
+      await handleInfoClick(firstDevice.serial_number);
     } else {
       // Handle case with no devices - maybe show a message?
       console.log("No devices available to show info for.");
@@ -218,11 +226,11 @@ const LocationPage: React.FC = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-        {devices.map((d) => (
-          // Basic validation for lat/lng before rendering marker
+        {devices.filter(d => Date.now() - d.lastSeen < 60000).map((d) => (
+          // Only show devices seen in the last 60 seconds
           (typeof d.latitude === 'number' && typeof d.longitude === 'number') && (
             <Marker
-              key={d.device_id}
+              key={d.serial_number}
               position={[d.latitude, d.longitude]}
               icon={deviceIcon}
             >
@@ -233,7 +241,7 @@ const LocationPage: React.FC = () => {
                     Serial: {d.serial_number || '--'}
                   </Typography>
                   <Typography variant="body2">
-                    {d.device_name || d.device_id}
+                    {d.device_name || d.serial_number}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(d.timestamp).toLocaleString()}
@@ -245,7 +253,7 @@ const LocationPage: React.FC = () => {
                     variant="contained"
                     size="small"
                     startIcon={<InfoIcon />}
-                    onClick={() => handleInfoClick(d.device_id)}
+                    onClick={() => handleInfoClick(d.serial_number)}
                     sx={{ mt: 1, alignSelf: 'flex-start' }}
                   >
                     Device Info

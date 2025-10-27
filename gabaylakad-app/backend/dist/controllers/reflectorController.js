@@ -16,8 +16,13 @@ exports.deleteReflector = exports.updateReflector = exports.createReflector = ex
 const db_1 = __importDefault(require("../../db/db"));
 // TODO: integrate with IoT device data stream
 const getAllReflectors = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    console.log(`[REFLECTOR] getAllReflectors called by user: ${(_a = req.user) === null || _a === void 0 ? void 0 : _a.userId}`);
     try {
-        const [rows] = yield db_1.default.query('SELECT * FROM reflector');
+        const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized: No userId in token' });
+        const [rows] = yield db_1.default.query('SELECT * FROM reflector WHERE user_id = ?', [userId]);
         res.json(rows);
     }
     catch (error) {
@@ -26,9 +31,14 @@ const getAllReflectors = (req, res) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.getAllReflectors = getAllReflectors;
 const getReflectorById = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c, _d;
+    console.log(`[REFLECTOR] getReflectorById called by user: ${(_c = req.user) === null || _c === void 0 ? void 0 : _c.userId}, reflectorId: ${req.params.id}`);
     try {
+        const userId = (_d = req.user) === null || _d === void 0 ? void 0 : _d.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized: No userId in token' });
         const { id } = req.params;
-        const [rows] = yield db_1.default.query('SELECT * FROM reflector WHERE reflector_id = ?', [id]);
+        const [rows] = yield db_1.default.query('SELECT * FROM reflector WHERE reflector_id = ? AND user_id = ?', [id, userId]);
         const reflectors = rows;
         if (reflectors.length === 0)
             return res.status(404).json({ message: 'Reflector not found' });
@@ -40,8 +50,13 @@ const getReflectorById = (req, res) => __awaiter(void 0, void 0, void 0, functio
 });
 exports.getReflectorById = getReflectorById;
 const createReflector = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e, _f;
+    console.log(`[REFLECTOR] createReflector called by user: ${(_e = req.user) === null || _e === void 0 ? void 0 : _e.userId}`);
     try {
-        const reflector = req.body;
+        const userId = (_f = req.user) === null || _f === void 0 ? void 0 : _f.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized: No userId in token' });
+        const reflector = Object.assign(Object.assign({}, req.body), { user_id: userId });
         const [result] = yield db_1.default.query('INSERT INTO reflector SET ?', [reflector]);
         const insertResult = result;
         res.status(201).json(Object.assign({ reflector_id: insertResult.insertId }, reflector));
@@ -52,10 +67,15 @@ const createReflector = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 exports.createReflector = createReflector;
 const updateReflector = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _g, _h;
+    console.log(`[REFLECTOR] updateReflector called by user: ${(_g = req.user) === null || _g === void 0 ? void 0 : _g.userId}, reflectorId: ${req.params.id}`);
     try {
+        const userId = (_h = req.user) === null || _h === void 0 ? void 0 : _h.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized: No userId in token' });
         const { id } = req.params;
         const reflector = req.body;
-        const [result] = yield db_1.default.query('UPDATE reflector SET ? WHERE reflector_id = ?', [reflector, id]);
+        const [result] = yield db_1.default.query('UPDATE reflector SET ? WHERE reflector_id = ? AND user_id = ?', [reflector, id, userId]);
         const updateResult = result;
         if (updateResult.affectedRows === 0)
             return res.status(404).json({ message: 'Reflector not found' });
@@ -67,9 +87,14 @@ const updateReflector = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 exports.updateReflector = updateReflector;
 const deleteReflector = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _j, _k;
+    console.log(`[REFLECTOR] deleteReflector called by user: ${(_j = req.user) === null || _j === void 0 ? void 0 : _j.userId}, reflectorId: ${req.params.id}`);
     try {
+        const userId = (_k = req.user) === null || _k === void 0 ? void 0 : _k.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'Unauthorized: No userId in token' });
         const { id } = req.params;
-        const [result] = yield db_1.default.query('DELETE FROM reflector WHERE reflector_id = ?', [id]);
+        const [result] = yield db_1.default.query('DELETE FROM reflector WHERE reflector_id = ? AND user_id = ?', [id, userId]);
         const deleteResult = result;
         if (deleteResult.affectedRows === 0)
             return res.status(404).json({ message: 'Reflector not found' });

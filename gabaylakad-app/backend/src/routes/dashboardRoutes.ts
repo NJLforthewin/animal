@@ -1,3 +1,5 @@
+import { getAllDevices } from '../controllers/dashboardController';
+
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/authMiddleware';
 import {
@@ -11,16 +13,13 @@ import {
 
 const router = Router();
 
-
-// Existing routes
-router.get('/', getDashboardData);
-router.get('/devices/:id/status', getDeviceStatus);
-router.get('/battery', getBatteryLevels);
-router.get('/alerts', getRecentAlerts);
-router.get('/reflectors', getReflectorStatus);
-router.get('/activity', getActivitySummary);
-
-// New dashboard card endpoints
+router.get('/device', authenticateToken, getAllDevices);
+router.get('/', authenticateToken, getDashboardData);
+router.get('/devices/:id/status', authenticateToken, getDeviceStatus);
+router.get('/battery', authenticateToken, getBatteryLevels);
+router.get('/alerts', authenticateToken, getRecentAlerts);
+router.get('/reflectors', authenticateToken, getReflectorStatus);
+router.get('/activity', authenticateToken, getActivitySummary);
 
 import {
   getEmergencyStatus,
@@ -39,9 +38,10 @@ router.get('/location', authenticateToken, getLocationData);
 router.get('/sensor', authenticateToken, getSensorLog);
 
 
-import { getDeviceInfo } from '../controllers/locationController';
+import { getDeviceInfo, getDeviceInfoById } from '../controllers/locationController';
 import { getDashboardDeviceBySerial } from '../controllers/dashboardController';
-router.get('/device/:deviceId', authenticateToken, getDeviceInfo);
+// New: Allow fetching device info for any deviceId (admin/flexible)
+router.get('/device/:deviceId', authenticateToken, getDeviceInfoById);
 router.get('/device/serial/:serial_number', authenticateToken, getDashboardDeviceBySerial);
 
 export default router;

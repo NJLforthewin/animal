@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const authMiddleware_1 = require("../middleware/authMiddleware");
 const batteryController_1 = require("../controllers/batteryController");
 const router = (0, express_1.Router)();
-router.get('/', batteryController_1.getAllBatteries);
-router.get('/:id', batteryController_1.getBatteryById);
-router.post('/', batteryController_1.createBattery);
-router.put('/:id', batteryController_1.updateBattery);
-router.delete('/:id', batteryController_1.deleteBattery);
+router.get('/', authMiddleware_1.authenticateToken, batteryController_1.getAllBatteries);
+router.get('/:id', authMiddleware_1.authenticateToken, batteryController_1.getBatteryById);
+router.post('/', authMiddleware_1.authenticateToken, batteryController_1.createBattery);
+router.put('/:id', authMiddleware_1.authenticateToken, batteryController_1.updateBattery);
+router.delete('/:id', authMiddleware_1.authenticateToken, batteryController_1.deleteBattery);
 exports.default = router;

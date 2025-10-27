@@ -5,7 +5,7 @@ export const updateProfile = async (req: Request, res: Response) => {
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }
-    const {
+    let {
       first_name,
       last_name,
       phone_number,
@@ -15,9 +15,21 @@ export const updateProfile = async (req: Request, res: Response) => {
       blind_phone_number,
       blind_age,
       impairment_level,
-      device_id,
+      serial_number,
       avatar
     } = req.body;
+
+    let device_id = null;
+    if (serial_number) {
+      const deviceRes = await query('SELECT device_id FROM device WHERE serial_number = ?', [serial_number]);
+      const deviceRows = Array.isArray(deviceRes.rows) ? (deviceRes.rows as any[]) : [];
+      if (deviceRows.length > 0) {
+        device_id = deviceRows[0].device_id;
+      }
+    }
+
+    // Fix device_id: convert empty string to null
+    if (device_id === "") device_id = null;
     console.log('[BACKEND] Received avatar in updateProfile:', avatar);
 
     // Validate required fields
@@ -138,15 +150,15 @@ export const getUserProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
     // Always attach device serial number from device table
-    let device_serial_number = null;
+    let serial_number = null;
     if (user && user.device_id) {
       const deviceRes = await query('SELECT serial_number FROM device WHERE device_id = ?', [user.device_id]);
       const deviceRows = Array.isArray(deviceRes.rows) ? (deviceRes.rows as any[]) : [];
-      device_serial_number = deviceRows[0]?.serial_number || null;
+      serial_number = deviceRows[0]?.serial_number || null;
     }
     res.json({
       ...user,
-      device_serial_number
+      serial_number
     });
   } catch (error) {
     res.status(500).json({ message: 'Database error', error });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Box,
@@ -35,8 +35,16 @@ interface DashboardMobileProps {
 }
 
 const DashboardMobile: React.FC<DashboardMobileProps> = ({ user, data }) => {
-  const isOnline = user?.isOnline;
-  const initials = (user?.blind_full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+  const safeUser = user || {};
+  const [lastSerial, setLastSerial] = useState<string>(() => sessionStorage.getItem('lastSerial') || '');
+  useEffect(() => {
+    if (safeUser?.serial_number) {
+      setLastSerial(safeUser.serial_number);
+      sessionStorage.setItem('lastSerial', safeUser.serial_number);
+    }
+  }, [safeUser?.serial_number]);
+  const isOnline = safeUser?.isOnline;
+  const initials = (safeUser?.blind_full_name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <Box sx={{ flex: 1, overflowY: 'auto', p: 2, bgcolor: 'grey.50' }}>
@@ -89,7 +97,7 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({ user, data }) => {
             }}
           >
             <SensorsIcon sx={{ fontSize: '1.2rem' }} />
-            Smart Stick #{user?.device_serial_number || '--'} - Connected
+            Smart Stick #{safeUser?.serial_number || lastSerial || '--'} - Connected
           </Typography>
         </Paper>
 
@@ -102,7 +110,8 @@ const DashboardMobile: React.FC<DashboardMobileProps> = ({ user, data }) => {
           <Stack direction="row" spacing={2} sx={{ width: '100%' }}>
             <Box sx={{ width: '50%', minWidth: 0 }}>
               <Paper elevation={2} sx={{ height: 180, minHeight: 180, maxHeight: 180, overflow: 'hidden', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
-                <DashboardLocationCard deviceId={user?.device_id || ''} />
+                {/* Removed deviceId prop, only use serialNumber */}
+                  <DashboardLocationCard serialNumber={safeUser?.serial_number || lastSerial || ''} />
               </Paper>
             </Box>
             <Box sx={{ width: '50%', minWidth: 0 }}>

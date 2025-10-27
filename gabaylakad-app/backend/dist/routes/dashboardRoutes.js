@@ -1,21 +1,27 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = require("express");
 const dashboardController_1 = require("../controllers/dashboardController");
-const router = (0, express_1.Router)();
-// Existing routes
-router.get('/', dashboardController_1.getDashboardData);
-router.get('/devices', dashboardController_1.getDeviceStatus);
-router.get('/battery', dashboardController_1.getBatteryLevels);
-router.get('/alerts', dashboardController_1.getRecentAlerts);
-router.get('/reflectors', dashboardController_1.getReflectorStatus);
-router.get('/activity', dashboardController_1.getActivitySummary);
-// New dashboard card endpoints
+const express_1 = require("express");
+const authMiddleware_1 = require("../middleware/authMiddleware");
 const dashboardController_2 = require("../controllers/dashboardController");
-router.get('/emergency', dashboardController_2.getEmergencyStatus);
-router.get('/nightreflector', dashboardController_2.getNightReflectorStatus);
-router.get('/activitylog', dashboardController_2.getActivityLog);
-router.get('/location', dashboardController_2.getLocationData);
+const router = (0, express_1.Router)();
+router.get('/device', authMiddleware_1.authenticateToken, dashboardController_1.getAllDevices);
+router.get('/', authMiddleware_1.authenticateToken, dashboardController_2.getDashboardData);
+router.get('/devices/:id/status', authMiddleware_1.authenticateToken, dashboardController_2.getDeviceStatus);
+router.get('/battery', authMiddleware_1.authenticateToken, dashboardController_2.getBatteryLevels);
+router.get('/alerts', authMiddleware_1.authenticateToken, dashboardController_2.getRecentAlerts);
+router.get('/reflectors', authMiddleware_1.authenticateToken, dashboardController_2.getReflectorStatus);
+router.get('/activity', authMiddleware_1.authenticateToken, dashboardController_2.getActivitySummary);
 const dashboardController_3 = require("../controllers/dashboardController");
-router.get('/device/:id', dashboardController_3.getDeviceInfo);
+router.get('/emergency', authMiddleware_1.authenticateToken, dashboardController_3.getEmergencyStatus);
+router.get('/nightreflector', authMiddleware_1.authenticateToken, dashboardController_3.getNightReflectorStatus);
+router.get('/activitylog', authMiddleware_1.authenticateToken, dashboardController_3.getActivityLog);
+router.get('/location', authMiddleware_1.authenticateToken, dashboardController_3.getLocationData);
+// New: Sensor log endpoint for dashboard
+router.get('/sensor', authMiddleware_1.authenticateToken, dashboardController_3.getSensorLog);
+const locationController_1 = require("../controllers/locationController");
+const dashboardController_4 = require("../controllers/dashboardController");
+// New: Allow fetching device info for any deviceId (admin/flexible)
+router.get('/device/:deviceId', authMiddleware_1.authenticateToken, locationController_1.getDeviceInfoById);
+router.get('/device/serial/:serial_number', authMiddleware_1.authenticateToken, dashboardController_4.getDashboardDeviceBySerial);
 exports.default = router;

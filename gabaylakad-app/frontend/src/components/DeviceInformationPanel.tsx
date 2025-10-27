@@ -12,8 +12,7 @@ import PhonelinkIcon from '@mui/icons-material/Phonelink'; // Icon for devices
 
 // Define a simple interface for the profile prop
 interface Profile {
-  device_id?: string;
-  device_serial_number?: string;
+  serial_number?: string;
 }
 
 const DeviceInformationPanel: React.FC<{ profile: Profile }> = ({ profile }) => {
@@ -56,7 +55,7 @@ const DeviceInformationPanel: React.FC<{ profile: Profile }> = ({ profile }) => 
             {/* Use a disabled TextField to show read-only info */}
             <TextField
               label="Device Serial Number"
-              value={profile.device_serial_number || 'Not available'}
+              value={profile.serial_number || 'Not available'}
               disabled
               fullWidth
             />

@@ -23,14 +23,12 @@ function sendResetEmail(to, verificationCode, type = 'register') {
         let html = `<b>Your verification code is: ${verificationCode}</b>`;
         let text = `Your verification code is: ${verificationCode}`;
         if (type === 'register') {
-            // Verification link for registration
-            const verifyUrl = `http://localhost:5000/verify?email=${encodeURIComponent(to)}&code=${verificationCode}`;
             subject = 'Verify your GabayLakad Account';
             html = `<p>Thank you for registering your device!</p>
-                <p>Your verification code is: <b>${verificationCode}</b></p>
-                <p>Or click the link below to verify your account:</p>
-                <a href="${verifyUrl}">Verify Account</a>`;
-            text = `Thank you for registering your device!\nYour verification code is: ${verificationCode}\nOr visit: ${verifyUrl}`;
+                <p>Your verification code is: <b>${verificationCode}</b></p>`;
+            text = `Thank you for registering your device!\nYour verification code is: ${verificationCode}`;
+            // Log the code for testing
+            console.log(`[TEST MODE] Account Verification code for ${to}: ${verificationCode}`);
         }
         else if (type === 'reset') {
             // Password reset link

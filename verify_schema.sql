@@ -2,7 +2,7 @@
 -- GabayLakad Database Schema Verification Script
 -- ==========================================================
 
-USE gabay_db;
+USE gabalakad_database;
 
 -- ----------------------------------------------------------
 -- 1. Show all tables
@@ -48,7 +48,7 @@ SELECT
     referenced_table_name,
     referenced_column_name
 FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = 'gabay_db'
+WHERE TABLE_SCHEMA = 'gabalakad_database'
 AND referenced_table_name IS NOT NULL
 ORDER BY table_name;
 
@@ -112,7 +112,7 @@ SELECT
     table_name, 
     create_time 
 FROM information_schema.tables 
-WHERE table_schema = 'gabay_db'
+WHERE table_schema = 'gabalakad_database'
 ORDER BY create_time DESC;
 
 -- ----------------------------------------------------------

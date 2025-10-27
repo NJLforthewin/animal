@@ -1,3 +1,43 @@
+// Get latest device info for any device by deviceId (admin/flexible)
+export const getDeviceInfoById = async (req: Request, res: Response) => {
+    const { deviceId } = req.params;
+    if (!deviceId) {
+        return res.status(400).json({ error: 'Missing deviceId parameter' });
+    }
+    try {
+        // Always join device table to get serial_number
+        const [rows]: [any[], any] = await pool.query(
+            `SELECT dl.*, d.serial_number
+             FROM dashboard_latest dl
+             LEFT JOIN device d ON dl.device_id = d.device_id
+             WHERE dl.device_id = ?
+             LIMIT 1`,
+            [deviceId]
+        );
+        if (!rows || rows.length === 0) {
+            return res.status(404).json({ error: 'Device not found' });
+        }
+        const device = rows[0];
+        let serial_number = device.serial_number ?? null;
+        if (!serial_number && device.device_id) {
+            const [devRows]: [any[], any] = await pool.query('SELECT serial_number FROM device WHERE device_id = ?', [device.device_id]);
+            if (devRows && devRows.length > 0) {
+                serial_number = devRows[0].serial_number ?? null;
+            }
+        }
+        res.status(200).json({
+            ...device,
+            street_name: device.street_name ?? null,
+            place_name: device.place_name ?? null,
+            context_tag: device.context_tag ?? null,
+            city_name: device.city_name ?? null,
+            serial_number: serial_number
+        });
+    } catch (error) {
+        console.error('[getDeviceInfoById Error]', error);
+        return res.status(500).json({ message: 'Failed to fetch device info by id' });
+    }
+};
     export const getLocationHistoryBySerial = async (req: Request, res: Response) => {
     console.log(`[LOCATION] getLocationHistoryBySerial called by user: ${req.user?.userId}, serial: ${req.params.serial_number}`);
     const { serial_number } = req.params;
@@ -278,6 +318,7 @@ export const createLocation = async (req: Request, res: Response) => {
             if (io) {
                 io.emit('location_update', {
                     device_id,
+                    serial_number,
                     latitude,
                     longitude,
                     street_name: finalStreet,

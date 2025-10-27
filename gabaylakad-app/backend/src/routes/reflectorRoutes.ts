@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticateToken } from '../middleware/authMiddleware';
 import {
   getAllReflectors,
   getReflectorById,
@@ -9,10 +10,10 @@ import {
 
 const router = Router();
 
-router.get('/', getAllReflectors);
-router.get('/:id', getReflectorById);
-router.post('/', createReflector);
-router.put('/:id', updateReflector);
-router.delete('/:id', deleteReflector);
+router.get('/', authenticateToken, getAllReflectors);
+router.get('/:id', authenticateToken, getReflectorById);
+router.post('/', authenticateToken, createReflector);
+router.put('/:id', authenticateToken, updateReflector);
+router.delete('/:id', authenticateToken, deleteReflector);
 
 export default router;

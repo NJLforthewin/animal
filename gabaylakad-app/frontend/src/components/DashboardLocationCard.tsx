@@ -11,22 +11,26 @@ import { useSocketLocation } from '../hooks/useSocketLocation';
   import LocationOnIcon from '@mui/icons-material/LocationOn'; // Icon for location
 
 
-const fetchLocation = async (deviceId: string) => {
+
+const fetchLocation = async () => {
   const token = sessionStorage.getItem('token');
-  const res = await fetch(`/api/dashboard/device/${deviceId}`, {
+  const res = await fetch('/api/dashboard/location', {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error('Failed to fetch device location');
+  if (!res.ok) throw new Error('Failed to fetch device locations');
   return await res.json();
 };
 
+
+
 interface DashboardLocationCardProps {
-  deviceId: string;
+  serialNumber: string;
 }
 
 
-const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId }) => {
-  const { location: socketLocation } = useSocketLocation(deviceId);
+
+const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ serialNumber }) => {
+  const { location: socketLocation } = useSocketLocation(serialNumber);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -35,16 +39,20 @@ const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId 
     let lastData: any = null;
     const fetchAndUpdate = () => {
       setLoading(true);
-      fetchLocation(deviceId).then(res => {
+      fetchLocation().then(res => {
         // DEBUG: Log backend response
         console.log('[DashboardLocationCard] fetchLocation response:', res);
         if (mounted) {
           setLoading(false);
-          if (res && Object.keys(res).length > 0) {
-            setData(res);
-            lastData = res;
+          // Backend now returns a single row array for the current user's device
+          const deviceData = Array.isArray(res.data) ? res.data[0] : null;
+          if (deviceData) {
+            setData(deviceData);
+            lastData = deviceData;
           } else if (lastData) {
             setData(lastData);
+          } else {
+            setData(null);
           }
         }
       }).catch(() => {
@@ -57,7 +65,7 @@ const DashboardLocationCard: React.FC<DashboardLocationCardProps> = ({ deviceId 
     fetchAndUpdate();
     const interval = setInterval(fetchAndUpdate, 5000);
     return () => { mounted = false; clearInterval(interval); };
-  }, [deviceId]);
+  }, [serialNumber]);
 
   const isMobile = useIsMobile();
   // Accept both object and array response, map correct backend fields

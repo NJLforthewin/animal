@@ -1,7 +1,18 @@
-// Fetch real-time device status from device_status table
+import { query } from '../utils/db';
 import { Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2';
 import pool from '../../db/db';
+// Return all devices for dashboard
+export const getAllDevices = async (req: Request, res: Response) => {
+    try {
+        const result = await query('SELECT * FROM device');
+        res.json(result.rows || result);
+    } catch (error) {
+        res.status(500).json({ message: 'Database error', error });
+    }
+};
+// Fetch real-time device status from device_status table
+
 
 export const getDeviceStatus = async (req: Request, res: Response) => {
     let deviceId = req.params.id;
@@ -69,22 +80,26 @@ export const getSensorLog = async (req: Request, res: Response) => {
 export const getDashboardDeviceBySerial = async (req: Request, res: Response) => {
     const serialNumber = req.params.serial_number;
     try {
-        const [rows] = await pool.query(
-            `SELECT * FROM dashboard_latest WHERE serial_number = ? LIMIT 1`,
+        const [deviceRows] = await pool.query(
+            `SELECT * FROM device WHERE serial_number = ? LIMIT 1`,
             [serialNumber]
         );
-        const result = rows as any[];
-        if (!result || result.length === 0) {
-            return res.status(404).json({ error: 'Device not found' });
+        const device = (deviceRows as any[])[0];
+        if (!device) {
+            return res.status(404).json({ error: 'Device not found in device table' });
         }
-        const device = result[0];
+
+        const [locationRows] = await pool.query(
+            `SELECT * FROM location_log WHERE device_id = ? ORDER BY timestamp DESC LIMIT 1`,
+            [device.device_id]
+        );
+        const location = (locationRows as any[])[0];
+
         res.status(200).json({
             ...device,
-            street_name: device.street_name ?? null,
-            place_name: device.place_name ?? null,
-            context_tag: device.context_tag ?? null,
-            city_name: device.city_name ?? null
+            ...location
         });
+
     } catch (error) {
         console.error('[Dashboard Device Serial Error]', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -197,16 +212,27 @@ export const getActivityLog = async (req: Request, res: Response) => {
 
 export const getLocationData = async (req: Request, res: Response) => {
     try {
+        // Get current user's device_id
+        const userId = req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+        const [userRows] = await pool.query('SELECT device_id FROM user WHERE user_id = ?', [userId]);
+        const userRowArr = userRows as any[];
+        if (!userRowArr.length || !userRowArr[0].device_id) {
+            return res.status(404).json({ success: false, message: 'No device found for user.' });
+        }
+        const deviceId = userRowArr[0].device_id;
+        // Get latest location for this device
         const [rows] = await pool.query(`
             SELECT l.device_id, d.serial_number, l.latitude, l.longitude, l.timestamp,
                    l.street_name, l.city_name, l.place_name, l.context_tag
             FROM location_log l
             JOIN device d ON l.device_id = d.device_id
-            WHERE l.timestamp = (
-                SELECT MAX(timestamp) FROM location_log WHERE device_id = l.device_id
-            )
-            ORDER BY l.device_id ASC
-        `);
+            WHERE l.device_id = ?
+            ORDER BY l.timestamp DESC
+            LIMIT 1
+        `, [deviceId]);
         const mappedRows = (rows as any[]).map((row: any) => ({
             ...row,
             street_name: row.street_name ?? null,
@@ -249,8 +275,36 @@ export const getDeviceInfo = async (req: Request, res: Response) => {
 
 export const getDashboardData = async (req: Request, res: Response) => {
     try {
+        // Get all dashboard_latest rows (for cards, etc)
         const [rows] = await pool.query('SELECT * FROM dashboard_latest ORDER BY device_id ASC');
-        res.status(200).json(rows);
+
+        // Get current user info and their assigned device's serial_number
+        let user = null;
+        if (req.user?.userId) {
+            // Get user row
+            const [userRows] = await pool.query('SELECT * FROM user WHERE user_id = ?', [req.user.userId]);
+            const userRowArr = userRows as any[];
+            if (userRowArr.length > 0) {
+                user = { ...userRowArr[0] };
+                // Get device serial_number if user has device_id
+                if (user.device_id) {
+                    const [deviceRows] = await pool.query('SELECT serial_number FROM device WHERE device_id = ?', [user.device_id]);
+                    const deviceRowArr = deviceRows as any[];
+                    if (deviceRowArr.length > 0) {
+                        user.serial_number = deviceRowArr[0].serial_number;
+                    } else {
+                        user.serial_number = null;
+                    }
+                } else {
+                    user.serial_number = null;
+                }
+            }
+        }
+
+        res.status(200).json({
+            user,
+            data: rows
+        });
     } catch (error) {
         console.error('[Dashboard SQL Error]', error);
         res.status(500).json({ error: 'Internal Server Error' });

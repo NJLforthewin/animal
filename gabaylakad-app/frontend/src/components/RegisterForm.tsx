@@ -32,7 +32,7 @@ const RegisterForm: React.FC = () => {
     const [email, setEmail] = useState('');
     const [relationship, setRelationship] = useState('');
     const [otherRelationship, setOtherRelationship] = useState('');
-    const [deviceId, setDeviceId] = useState('');
+    const [serialNumber, setSerialNumber] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [userFullName, setUserFullName] = useState('');
@@ -61,7 +61,7 @@ const RegisterForm: React.FC = () => {
         setSuccessMsg('');
         if (
             !firstName || !lastName || !phoneNumber || !email || !relationship ||
-            !deviceId || !password || !confirmPassword || !userFullName ||
+            !serialNumber || !password || !confirmPassword || !userFullName ||
             !userAge || !impairmentLevel || !terms
         ) {
             setErrorMsg('Please fill in all required fields!');
@@ -105,7 +105,7 @@ const RegisterForm: React.FC = () => {
                     email,
                     phone_number: phoneNumber,
                     impairment_level: impairmentLevel,
-                    serial_number: deviceId,
+                    serial_number: serialNumber,
                     relationship: rel,
                     blind_full_name: userFullName,
                     blind_age: userAge, 
@@ -116,12 +116,25 @@ const RegisterForm: React.FC = () => {
             console.log('Register response:', data);
             if (res.ok) {
                 // Show assigned device info after registration
-                setSuccessMsg(
-                  `Registration successful!\nDevice Serial: ${data.serial_number || deviceId}\nDevice ID: ${data.device_id || ''}`
-                );
+                                setSuccessMsg(
+                                    `Registration successful!\nDevice Serial: ${data.serial_number || serialNumber}`
+                                );
                 // If backend returns token, save and redirect
                 if (data.token) {
                     sessionStorage.setItem('token', data.token);
+                    // Fetch user profile and update UserContext before navigating
+                    try {
+                        const profileRes = await fetch('/api/profile', {
+                            headers: { Authorization: `Bearer ${data.token}` },
+                        });
+                        const profileData = await profileRes.json();
+                        // Try to update UserContext if available
+                        if (window && window.dispatchEvent) {
+                            window.dispatchEvent(new CustomEvent('user-profile-updated', { detail: profileData }));
+                        }
+                    } catch (e) {
+                        // Ignore profile fetch errors, still navigate
+                    }
                     setTimeout(() => {
                         navigate('/dashboard');
                     }, 2000);
@@ -217,8 +230,8 @@ const RegisterForm: React.FC = () => {
                             )}
                         </div>
                         <div>
-                            <label htmlFor="deviceId" className="block text-sm font-medium text-gray-700 mb-2 required">Device Serial Number</label>
-                            <input id="deviceId" type="text" required value={deviceId} onChange={e => setDeviceId(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Device serial number" />
+                            <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700 mb-2 required">Device Serial Number</label>
+                            <input id="serialNumber" type="text" required value={serialNumber} onChange={e => setSerialNumber(e.target.value)} className="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Device serial number" />
                             <p className="mt-1 text-xs text-gray-500">Unique serial number on the tracking device</p>
                         </div>
                     </div>

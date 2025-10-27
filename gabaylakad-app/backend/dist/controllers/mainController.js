@@ -9,15 +9,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sensor = exports.location = exports.history = exports.profile = exports.dashboard = exports.updateProfile = void 0;
+exports.sensor = exports.location = exports.history = exports.getUserProfile = exports.dashboard = exports.updateProfile = void 0;
 const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
+    console.log(`[MAIN] updateProfile called by user: ${(_a = req.user) === null || _a === void 0 ? void 0 : _a.userId}`);
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.userId;
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        const { first_name, last_name, phone_number, email, relationship, blind_full_name, blind_phone_number, blind_age, impairment_level, device_id, avatar } = req.body;
+        let { first_name, last_name, phone_number, email, relationship, blind_full_name, blind_phone_number, blind_age, impairment_level, serial_number, avatar } = req.body;
+        let device_id = null;
+        if (serial_number) {
+            const deviceRes = yield (0, db_1.query)('SELECT device_id FROM device WHERE serial_number = ?', [serial_number]);
+            const deviceRows = Array.isArray(deviceRes.rows) ? deviceRes.rows : [];
+            if (deviceRows.length > 0) {
+                device_id = deviceRows[0].device_id;
+            }
+        }
+        // Fix device_id: convert empty string to null
+        if (device_id === "")
+            device_id = null;
         console.log('[BACKEND] Received avatar in updateProfile:', avatar);
         // Validate required fields
         if (!first_name || !last_name || !phone_number || !email) {
@@ -45,9 +57,10 @@ const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 exports.updateProfile = updateProfile;
 const db_1 = require("../utils/db");
 const dashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
+    var _c, _d;
+    console.log(`[MAIN] dashboard called by user: ${(_c = req.user) === null || _c === void 0 ? void 0 : _c.userId}`);
     try {
-        const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.userId;
+        const userId = (_d = req.user) === null || _d === void 0 ? void 0 : _d.userId;
         console.log('[DASHBOARD] Incoming request. Decoded userId:', userId);
         if (!userId) {
             console.error('[DASHBOARD] Unauthorized: No userId in token. Raw req.user:', req.user);
@@ -71,7 +84,21 @@ const dashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.setHeader('X-Login-Error', '[DASHBOARD] User not found');
             return res.status(404).json({ message: 'User not found', userId });
         }
-        user.device_serial_number = user.device_id;
+        // Look up device serial number if device_id exists
+        let device_serial_number = null;
+        if (user && user.device_id) {
+            try {
+                const deviceRes = yield (0, db_1.query)('SELECT serial_number FROM device WHERE device_id = ?', [user.device_id]);
+                const deviceRows = Array.isArray(deviceRes.rows) ? deviceRes.rows : [];
+                if (deviceRows.length > 0) {
+                    device_serial_number = deviceRows[0].serial_number;
+                }
+            }
+            catch (err) {
+                console.error('[DASHBOARD] Error fetching device serial number:', err);
+            }
+        }
+        user.device_serial_number = device_serial_number;
         // Example: Get recent history (limit 5)
         let recent = [];
         try {
@@ -111,29 +138,33 @@ const dashboard = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.dashboard = dashboard;
-const profile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _c;
+const getUserProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _e, _f;
+    const userId = (_e = req.user) === null || _e === void 0 ? void 0 : _e.userId;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
     try {
-        const userId = (_c = req.user) === null || _c === void 0 ? void 0 : _c.userId;
-        if (!userId) {
-            console.error('[PROFILE] Unauthorized: No userId in token. Raw req.user:', req.user);
-            return res.status(401).json({ message: 'Unauthorized' });
-        }
-        const result = yield (0, db_1.query)('SELECT user_id, blind_full_name, blind_age, blind_phone_number, impairment_level, email, device_id, name, first_name, last_name, phone_number, relationship, avatar FROM user WHERE user_id = ?', [userId]);
-        const rows = Array.isArray(result.rows) ? result.rows : [];
-        const user = rows[0];
+        const result = yield (0, db_1.query)('SELECT * FROM user WHERE user_id = ?', [userId]);
+        const userRows = Array.isArray(result.rows) ? result.rows : [];
+        const user = userRows[0] || null;
         if (!user) {
-            console.error('[PROFILE] User not found for userId:', userId);
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json(user);
+        // Always attach device serial number from device table
+        let serial_number = null;
+        if (user && user.device_id) {
+            const deviceRes = yield (0, db_1.query)('SELECT serial_number FROM device WHERE device_id = ?', [user.device_id]);
+            const deviceRows = Array.isArray(deviceRes.rows) ? deviceRes.rows : [];
+            serial_number = ((_f = deviceRows[0]) === null || _f === void 0 ? void 0 : _f.serial_number) || null;
+        }
+        res.json(Object.assign(Object.assign({}, user), { serial_number }));
     }
     catch (error) {
-        console.error('[PROFILE] Database error:', error, '\nRequest headers:', req.headers, '\nRequest body:', req.body);
         res.status(500).json({ message: 'Database error', error });
     }
 });
-exports.profile = profile;
+exports.getUserProfile = getUserProfile;
 const history = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Mock history data
     res.json({

@@ -117,6 +117,7 @@ const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.setHeader('X-Login-Error', msg);
             return res.status(401).json({ message: 'Incorrect password!', token: null });
         }
+        console.log(`[LOGIN SUCCESS] User ${user.user_id} (${user.email}) logged in at ${new Date().toISOString()}`);
         const token = jsonwebtoken_1.default.sign({ userId: user.user_id, email: user.email }, process.env.JWT_SECRET || 'your_secret_key', { expiresIn: '10m' });
         const refreshToken = generateRefreshToken();
         // Save refresh token in DB
@@ -172,29 +173,53 @@ const handleRefreshToken = (req, res) => __awaiter(void 0, void 0, void 0, funct
 exports.handleRefreshToken = handleRefreshToken;
 // Register endpoint
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { firstName, lastName, fullName, email, phone_number, impairment_level, device_id, password, relationship, blind_full_name, blind_age, blind_phone_number, } = req.body;
+    const { firstName, lastName, fullName, email, phone_number, impairment_level, password, relationship, blind_full_name, blind_age, blind_phone_number, serial_number } = req.body;
     const name = `${firstName} ${lastName}`.trim();
-    if (!firstName || !lastName || !email || !phone_number || !impairment_level || !device_id || !password || !blind_full_name || !blind_age) {
+    if (!firstName || !lastName || !email || !phone_number || !impairment_level || !password || !blind_full_name || !blind_age || !serial_number) {
         return res.status(400).json({ message: 'Please fill in all required fields' });
     }
     try {
-        // Check if device is active (simulate activation check)
-        const isActive = true; // Replace with actual activation logic if needed
-        if (!isActive) {
-            return res.status(403).json({ message: 'Device is not yet activated. Please contact customer service for activation.' });
+        // Check if device with this serial number exists
+        const deviceRes = yield (0, db_1.query)('SELECT device_id FROM device WHERE serial_number = ?', [serial_number]);
+        const deviceRows = Array.isArray(deviceRes.rows) ? deviceRes.rows : [];
+        let device_id;
+        if (deviceRows.length > 0) {
+            // Device exists, check if assigned to a user
+            const deviceId = deviceRows[0].device_id;
+            const userRes = yield (0, db_1.query)('SELECT user_id FROM user WHERE device_id = ?', [deviceId]);
+            const userRows = Array.isArray(userRes.rows) ? userRes.rows : [];
+            if (userRows.length > 0) {
+                // Device is already assigned
+                return res.status(409).json({ message: 'Device serial number is already assigned to another user. Please use a different device.' });
+            }
+            device_id = deviceId;
         }
-        // Check if device is already registered to a user
-        const deviceUserRes = yield (0, db_1.query)('SELECT * FROM user WHERE device_id = ?', [device_id]);
-        const deviceUserRows = Array.isArray(deviceUserRes.rows) ? deviceUserRes.rows : [];
-        if (deviceUserRows.length > 0) {
-            return res.status(409).json({ message: 'The Device ID you entered already exists. Please check your device manual for the correct Device ID or use a different one.' });
+        else {
+            // Device does not exist, create it
+            const deviceResult = yield (0, db_1.query)('INSERT INTO device (serial_number, is_active) VALUES (?, ?)', [serial_number, 1]);
+            device_id = deviceResult.insertId;
         }
         // Generate a 6-digit verification code
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedPassword = yield bcrypt_1.default.hash(password, 10);
-        yield (0, db_1.query)('INSERT INTO user (name, first_name, last_name, email, phone_number, impairment_level, device_id, password, is_verified, verification_code, relationship, blind_full_name, blind_age, blind_phone_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [name, firstName, lastName, email, phone_number, impairment_level, device_id, hashedPassword, false, verificationCode, relationship, blind_full_name, blind_age, blind_phone_number]);
+        yield (0, db_1.query)('INSERT INTO user (name, first_name, last_name, email, phone_number, impairment_level, device_id, password, is_verified, verification_code, relationship, blind_full_name, blind_age, blind_phone_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+            name !== null && name !== void 0 ? name : null,
+            firstName !== null && firstName !== void 0 ? firstName : null,
+            lastName !== null && lastName !== void 0 ? lastName : null,
+            email !== null && email !== void 0 ? email : null,
+            phone_number !== null && phone_number !== void 0 ? phone_number : null,
+            impairment_level !== null && impairment_level !== void 0 ? impairment_level : null,
+            device_id !== null && device_id !== void 0 ? device_id : null,
+            hashedPassword !== null && hashedPassword !== void 0 ? hashedPassword : null,
+            false,
+            verificationCode !== null && verificationCode !== void 0 ? verificationCode : null,
+            relationship !== null && relationship !== void 0 ? relationship : null,
+            blind_full_name !== null && blind_full_name !== void 0 ? blind_full_name : null,
+            blind_age !== null && blind_age !== void 0 ? blind_age : null,
+            blind_phone_number !== null && blind_phone_number !== void 0 ? blind_phone_number : null
+        ]);
         const previewUrl = yield (0, email_1.sendResetEmail)(email, verificationCode);
-        return res.status(201).json({ message: 'Registration initiated. Please check your email for the verification code.', previewUrl });
+        return res.status(201).json({ message: 'Registration initiated. Please check your email for the verification code.', serial_number, device_id, previewUrl });
     }
     catch (error) {
         console.error('Registration error:', error);

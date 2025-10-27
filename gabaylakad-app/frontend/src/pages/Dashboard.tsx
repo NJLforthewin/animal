@@ -130,6 +130,16 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
     </Box>
   );
 
+
+  // Keep last known serial number stable
+  const [lastSerial, setLastSerial] = useState<string>('');
+  const user = contextUser || data?.user || {};
+  useEffect(() => {
+    if (user?.serial_number) {
+      setLastSerial(user.serial_number);
+    }
+  }, [user?.serial_number]);
+
   if (!data || data === 'INACTIVE_DEEP_LOADING') {
     return renderLoadingOrError('Loading dashboard...');
   }
@@ -145,9 +155,6 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
    if (!data.user && !contextUser) {
         return renderLoadingOrError('Loading user data...');
    }
-
-
-  const user = contextUser || data.user;
 
   if (isMobile) {
     return <DashboardMobile user={user} data={data} />;
@@ -202,7 +209,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
             </Stack>
             <Chip
               icon={<SensorsIcon />}
-              label={`Smart Stick #${user?.device_serial_number || '--'} - Connected`}
+              label={`Smart Stick #${user?.serial_number || lastSerial || '--'} - Connected`}
               size="small"
               sx={{
                 bgcolor: 'rgba(0,0,0, 0.3)',
@@ -233,7 +240,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sidebarExpanded, setSidebarExpand
         <Divider sx={{ my: 3 }} />
         <Stack direction="row" spacing={3} sx={{ mt: 3 }}>
           <Box sx={{ flex: 1 }}>
-            <DashboardLocationCard deviceId={user?.device_id || ''} />
+            <DashboardLocationCard serialNumber={user?.serial_number || ''} />
           </Box>
           <Box sx={{ flex: 1 }}>
             <DashboardBatteryCard />

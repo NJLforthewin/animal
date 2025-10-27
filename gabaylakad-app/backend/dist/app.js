@@ -18,6 +18,7 @@ const batteryRoutes_1 = __importDefault(require("./routes/batteryRoutes"));
 const reflectorRoutes_1 = __importDefault(require("./routes/reflectorRoutes"));
 const locationRoutes_1 = __importDefault(require("./routes/locationRoutes"));
 const dashboardRoutes_1 = __importDefault(require("./routes/dashboardRoutes"));
+const sensorRoutes_1 = __importDefault(require("./routes/sensorRoutes"));
 const app = (0, express_1.default)();
 // Only allow frontend origin for Socket.IO and REST
 const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
@@ -71,6 +72,7 @@ app.use('/api/batteries', batteryRoutes_1.default);
 app.use('/api/reflectors', reflectorRoutes_1.default);
 app.use('/api/locations', locationRoutes_1.default);
 app.use('/api/dashboard', dashboardRoutes_1.default);
+app.use('/api/dashboard/sensor', sensorRoutes_1.default);
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', message: 'API is running' });
 });

@@ -27,7 +27,7 @@ export interface UserType {
   blind_phone_number?: string;
   blind_age?: string;
   impairment_level?: string;
-  device_id?: string;
+  serial_number?: string;
   phone_number?: string; // Added this field to match your save logic
 }
 
@@ -81,10 +81,19 @@ const Profile: React.FC = () => {
     }
   }
 
-  // Fetch profile on mount
+  // Fetch profile on mount and listen for profile update events
   useEffect(() => {
     fetchProfile();
-  }, []);
+    // Listen for user-profile-updated event (from registration)
+    const handler = (e: any) => {
+      if (e && e.detail) {
+        setProfile(e.detail);
+        setUser(e.detail);
+      }
+    };
+    window.addEventListener('user-profile-updated', handler);
+    return () => window.removeEventListener('user-profile-updated', handler);
+  }, [setUser]);
 
   // Responsive view switcher with route sync
   useEffect(() => {
@@ -141,7 +150,7 @@ const Profile: React.FC = () => {
                     blind_phone_number: profile?.blind_phone_number || '',
                     blind_age: profile?.blind_age || '',
                     impairment_level: profile?.impairment_level || '',
-                    device_id: profile?.device_id || '',
+                    serial_number: profile?.serial_number || '',
                   };
 
                   // 2. Send the new object to the server

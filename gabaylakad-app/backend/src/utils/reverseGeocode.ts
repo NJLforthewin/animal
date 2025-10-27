@@ -7,7 +7,7 @@
 export async function findNearestPOI(lat: number, lon: number, radiusMeters: number = 2000) {
   try {
     // LocationIQ Nearby API
-    const token = 'pk.c8e064dbe06551bab4eb49a21b0df684';
+    const token = 'pk.2f06bb4cec6052909ab17237f045e6a2';
     const url = `https://us1.locationiq.com/v1/nearby.php?key=${token}&lat=${lat}&lon=${lon}&radius=${radiusMeters}&limit=10&format=json`;
     console.log('[findNearestPOI] LocationIQ Request URL:', url);
     const response = await axios.get(url);

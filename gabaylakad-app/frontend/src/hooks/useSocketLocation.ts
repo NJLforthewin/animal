@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 export interface LocationUpdate {
-  device_id: string;
+  serial_number: string;
   latitude: number;
   longitude: number;
   timestamp: string;
@@ -23,7 +23,7 @@ export interface LocationUpdate {
   poi_distance_m?: number | null;
 }
 
-export function useSocketLocation(deviceId: string) {
+export function useSocketLocation(serialNumber: string) {
   const [location, setLocation] = useState<LocationUpdate | null>(null);
   const [connected, setConnected] = useState(false);
 
@@ -41,14 +41,14 @@ export function useSocketLocation(deviceId: string) {
     socket.on('error', (err) => {
     });
     socket.on('location_update', (data: LocationUpdate) => {
-      if (data.device_id === deviceId) {
+      if (data.serial_number === serialNumber) {
         setLocation(data);
       }
     });
     return () => {
       socket.disconnect();
     };
-  }, [deviceId]);
+  }, [serialNumber]);
 
   return { location, connected };
 }

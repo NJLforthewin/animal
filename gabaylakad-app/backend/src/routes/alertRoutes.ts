@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authenticateToken } from '../middleware/authMiddleware';
 import {
   getAllAlerts,
   getAlertById,
@@ -9,10 +10,10 @@ import {
 
 const router = Router();
 
-router.get('/', getAllAlerts);
-router.get('/:id', getAlertById);
-router.post('/', createAlert);
-router.put('/:id', updateAlert);
-router.delete('/:id', deleteAlert);
+router.get('/', authenticateToken, getAllAlerts);
+router.get('/:id', authenticateToken, getAlertById);
+router.post('/', authenticateToken, createAlert);
+router.put('/:id', authenticateToken, updateAlert);
+router.delete('/:id', authenticateToken, deleteAlert);
 
 export default router;

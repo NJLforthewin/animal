@@ -17,6 +17,7 @@ interface Profile {
   blind_phone_number?: string;
   blind_age?: number | string;
   impairment_level?: string;
+  serial_number?: string;
 }
 
 const PatientInformationPanel: React.FC<{ profile: Profile }> = ({ profile }) => {
@@ -58,7 +59,6 @@ const PatientInformationPanel: React.FC<{ profile: Profile }> = ({ profile }) =>
 
             {/* Use Stack for the 2-column layout */}
             <Stack spacing={2}>
-              
               {/* Row 1 */}
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
@@ -91,6 +91,15 @@ const PatientInformationPanel: React.FC<{ profile: Profile }> = ({ profile }) =>
                 />
               </Stack>
 
+              {/* Row 3: Serial Number */}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <TextField
+                  label="Smart Stick Serial Number"
+                  value={profile.serial_number || 'Not available'}
+                  disabled
+                  fullWidth
+                />
+              </Stack>
             </Stack>
           </Stack>
         </Paper>

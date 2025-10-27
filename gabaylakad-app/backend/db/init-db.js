@@ -1,4 +1,4 @@
-// Node.js script to initialize MySQL database and show tables
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -7,6 +7,7 @@ const config = require('./db.config');
 async function runSchema() {
     const schemaPath = path.join(__dirname, 'schema.sql');
     const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
+    console.log('DB config:', config);
     const connection = await mysql.createConnection({
         host: config.host,
         user: config.user,

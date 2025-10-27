@@ -131,7 +131,7 @@ export async function insertLocationLog() {
         valid = true;
       }
     }
-    if (geo) {
+    if (geo && geo.street_name && geo.place_name) {
       // Always call findNearestPOI and log the result
       const { findNearestPOI } = require('./reverseGeocode');
       poi = await findNearestPOI(lat, lng, 2000);
@@ -173,6 +173,8 @@ export async function insertLocationLog() {
         ]
       );
       console.log(`Inserted location for device ${device.device_id}: (${lat.toFixed(6)}, ${lng.toFixed(6)}) with context: ${geo.street_name}, ${geo.place_name}, ${geo.context_tag}, POI: ${poi?.poi_name}`);
+    } else {
+      console.log(`[Simulator] Skipped location insert for device ${device.device_id}: missing street_name or place_name.`);
     }
   }
 }
@@ -346,7 +348,7 @@ export async function runSimulation() {
       console.log('Starting continuous movement simulation (Cebu-bounded)');
       setInterval(async () => {
         try {
-          const [devicesList] = await pool.query('SELECT device_id FROM device');
+          const [devicesList] = await pool.query('SELECT device_id, serial_number FROM device');
           for (const device of devicesList as any[]) {
             // get last known location
             const [rows] = await pool.query('SELECT latitude, longitude FROM location_log WHERE device_id = ? ORDER BY timestamp DESC LIMIT 1', [device.device_id]);
@@ -382,6 +384,7 @@ export async function runSimulation() {
             } while (!geo.city_name || !geo.city_name.toLowerCase().includes('cebu city'));
             const payload = {
               device_id: device.device_id,
+              serial_number: device.serial_number,
               latitude: Number(tryLat.toFixed(6)),
               longitude: Number(tryLng.toFixed(6)),
               timestamp: new Date().toISOString(),
@@ -403,9 +406,17 @@ export async function runSimulation() {
                   await postLocationToApi(port, payload);
                   console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via API (socket failed)`);
                 } catch (err2) {
+                  // Fetch serial_number for device
+                  let serial_number = null;
+                  try {
+                    const [rows]: [any[], any] = await pool.query('SELECT serial_number FROM device WHERE device_id = ?', [device.device_id]);
+                    if (Array.isArray(rows) && rows.length > 0) serial_number = rows[0].serial_number;
+                  } catch (err) {
+                    console.error('Failed to fetch serial_number for device', device.device_id, err);
+                  }
                   await pool.query(
-                    'INSERT INTO location_log (device_id, latitude, longitude, timestamp, street_name, city_name, place_name, context_tag) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)',
-                    [device.device_id, payload.latitude, payload.longitude, payload.street_name, payload.city_name, payload.place_name, payload.context_tag]
+                    'INSERT INTO location_log (device_id, serial_number, latitude, longitude, timestamp, street_name, city_name, place_name, context_tag) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)',
+                    [device.device_id, serial_number, payload.latitude, payload.longitude, payload.street_name, payload.city_name, payload.place_name, payload.context_tag]
                   );
                   console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via direct DB insert (socket+API failed)`);
                 }
@@ -416,9 +427,17 @@ export async function runSimulation() {
                 console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via API`);
               } catch (err) {
                 // fallback: direct DB insert
+                // Fetch serial_number for device
+                let serial_number = null;
+                try {
+                  const [rows]: [any[], any] = await pool.query('SELECT serial_number FROM device WHERE device_id = ?', [device.device_id]);
+                  if (Array.isArray(rows) && rows.length > 0) serial_number = rows[0].serial_number;
+                } catch (err) {
+                  console.error('Failed to fetch serial_number for device', device.device_id, err);
+                }
                 await pool.query(
-                  'INSERT INTO location_log (device_id, latitude, longitude, timestamp, street_name, city_name, place_name, context_tag) VALUES (?, ?, ?, NOW(), ?, ?, ?, ?)',
-                  [device.device_id, payload.latitude, payload.longitude, payload.street_name, payload.city_name, payload.place_name, payload.context_tag]
+                  'INSERT INTO location_log (device_id, serial_number, latitude, longitude, timestamp, street_name, city_name, place_name, context_tag) VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)',
+                  [device.device_id, serial_number, payload.latitude, payload.longitude, payload.street_name, payload.city_name, payload.place_name, payload.context_tag]
                 );
                 console.log(`Simulated move for device ${device.device_id}: (${payload.latitude}, ${payload.longitude}) via direct DB insert (API failed)`);
               }

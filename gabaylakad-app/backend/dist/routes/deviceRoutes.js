@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const authMiddleware_1 = require("../middleware/authMiddleware");
 const deviceController_1 = require("../controllers/deviceController");
 const router = (0, express_1.Router)();
-router.get('/', deviceController_1.getAllDevices);
-router.get('/:id', deviceController_1.getDeviceById);
-router.post('/', deviceController_1.createDevice);
-router.put('/:id', deviceController_1.updateDevice);
-router.delete('/:id', deviceController_1.deleteDevice);
+router.get('/', authMiddleware_1.authenticateToken, deviceController_1.getAllDevices);
+router.get('/serial/:serial_number', authMiddleware_1.authenticateToken, deviceController_1.getDeviceBySerial);
+router.get('/:id', authMiddleware_1.authenticateToken, deviceController_1.getDeviceById);
+router.post('/', authMiddleware_1.authenticateToken, deviceController_1.createDevice);
+router.put('/:id', authMiddleware_1.authenticateToken, deviceController_1.updateDevice);
+router.delete('/:id', authMiddleware_1.authenticateToken, deviceController_1.deleteDevice);
 exports.default = router;

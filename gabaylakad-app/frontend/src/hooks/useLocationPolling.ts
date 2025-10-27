@@ -7,7 +7,7 @@ export interface LocationData {
   [key: string]: any;
 }
 
-export function useLocationPolling(deviceId: string, endpoint: string, intervalMs = 5000) {
+export function useLocationPolling(serialNumber: string, endpoint: string, intervalMs = 5000) {
   const [data, setData] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +16,7 @@ export function useLocationPolling(deviceId: string, endpoint: string, intervalM
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${endpoint}${endpoint.includes('?') ? '&' : '?'}device_id=${deviceId}`);
+      const res = await fetch(`${endpoint}${endpoint.includes('?') ? '&' : '?'}serial_number=${serialNumber}`);
       const json = await res.json();
       if (json.success) setData(json.data);
       else setError(json.message || 'Unknown error');
@@ -24,7 +24,7 @@ export function useLocationPolling(deviceId: string, endpoint: string, intervalM
       setError(e.message);
     }
     setLoading(false);
-  }, [deviceId, endpoint]);
+  }, [serialNumber, endpoint]);
 
   useEffect(() => {
     fetchData();
