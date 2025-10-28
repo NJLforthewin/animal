@@ -18,6 +18,33 @@ export const getDeviceInfoById = async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Device not found' });
         }
         const device = rows[0];
+        // Also attempt to fetch latest location entry for this device (if any)
+        try {
+            const [locRows]: [any[], any] = await pool.query(
+                `SELECT * FROM location_log WHERE device_id = ? ORDER BY timestamp DESC LIMIT 1`,
+                [deviceId]
+            );
+            if (Array.isArray(locRows) && locRows.length > 0) {
+                const loc = locRows[0];
+                // Merge location fields into device response where appropriate
+                device.latitude = loc.latitude ?? device.latitude ?? null;
+                device.longitude = loc.longitude ?? device.longitude ?? null;
+                device.location_timestamp = loc.timestamp ?? loc.location_timestamp ?? device.location_timestamp ?? null;
+                device.street_name = loc.street_name ?? device.street_name ?? null;
+                device.city_name = loc.city_name ?? device.city_name ?? null;
+                device.place_name = loc.place_name ?? device.place_name ?? null;
+                device.context_tag = loc.context_tag ?? device.context_tag ?? null;
+                device.poi_name = loc.poi_name ?? device.poi_name ?? null;
+                device.poi_type = loc.poi_type ?? device.poi_type ?? null;
+                device.poi_lat = loc.poi_lat ?? device.poi_lat ?? null;
+                device.poi_lon = loc.poi_lon ?? device.poi_lon ?? null;
+                device.poi_distance_km = loc.poi_distance_km ?? device.poi_distance_km ?? null;
+                device.poi_distance_m = loc.poi_distance_m ?? device.poi_distance_m ?? null;
+            }
+        } catch (locErr) {
+            console.error('[getDeviceInfoById - location fetch error]', locErr);
+            // continue without location data
+        }
         let serial_number = device.serial_number ?? null;
         if (!serial_number && device.device_id) {
             const [devRows]: [any[], any] = await pool.query('SELECT serial_number FROM device WHERE device_id = ?', [device.device_id]);

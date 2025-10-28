@@ -311,7 +311,7 @@ const ProfileMobile: React.FC<ProfileMobileProps> = ({
             />
             <TextField
               label="Device Serial Number"
-              value={profile?.serial_number || '-'}
+              value={profile?.serial_number ?? profile?.device_id ?? '-'}
               fullWidth
               disabled
             />

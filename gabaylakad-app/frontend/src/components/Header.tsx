@@ -22,7 +22,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import HistoryIcon from '@mui/icons-material/History';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import MemoryIcon from '@mui/icons-material/Memory';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import NotificationBell, { EmergencyAlert } from './NotificationBell';
 import LogoutIcon from '@mui/icons-material/Logout';
 import useScrollTrigger from '@mui/material/useScrollTrigger';
 // Navigation tabs with MUI icons
@@ -83,6 +83,37 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const userMenuOpen = Boolean(anchorEl);
   const navigate = useNavigate();
+
+  // --- Emergency Alerts Dropdown State ---
+  const [alertAnchorEl, setAlertAnchorEl] = useState<null | HTMLElement>(null);
+  const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(false);
+  const alertMenuOpen = Boolean(alertAnchorEl);
+
+  // Fetch recent emergency alerts
+  const fetchAlerts = async () => {
+    setLoadingAlerts(true);
+    try {
+      const res = await fetch('/api/dashboard/emergency', {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` },
+      });
+      const data = await res.json();
+      let arr = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : (data ? [data] : []);
+      setAlerts(arr.slice(0, 5));
+    } catch {
+      setAlerts([]);
+    }
+    setLoadingAlerts(false);
+  };
+
+  // Open/close for bell dropdown
+  const handleAlertBellClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAlertAnchorEl(event.currentTarget);
+    fetchAlerts();
+  };
+  const handleAlertMenuClose = () => {
+    setAlertAnchorEl(null);
+  };
   return (
     <AppBar
       position="sticky"
@@ -101,12 +132,31 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
           // Mobile Header
           <>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/logo192.png" alt="Logo" style={{ width: 70, height: 70, marginRight: 8 }} />
+              <Box
+                component="button"
+                onClick={() => navigate('/dashboard')}
+                sx={{
+                  p: 0,
+                  m: 0,
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <img src="/logo192.png" alt="Logo" style={{ width: 70, height: 70, marginRight: 8 }} />
+              </Box>
             </Box>
             <Box sx={{ flexGrow: 1 }} />
-            <IconButton color="inherit">
-              <NotificationsIcon />
-            </IconButton>
+            <NotificationBell
+              alerts={alerts}
+              loading={loadingAlerts}
+              onBellClick={handleAlertBellClick}
+              anchorEl={alertAnchorEl}
+              open={alertMenuOpen}
+              onMenuClose={handleAlertMenuClose}
+            />
             <IconButton onClick={handleMenuClick} size="small" sx={{ ml: 1 }}>
               <Avatar
                 src={getAvatarSrc()}
@@ -119,15 +169,34 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
           // Desktop Header
           <>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/logo192.png" alt="Logo" style={{ width: 70, height: 70, marginRight: 12 }} />
+              <Box
+                component="button"
+                onClick={() => navigate('/dashboard')}
+                sx={{
+                  p: 0,
+                  m: 0,
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <img src="/logo192.png" alt="Logo" style={{ width: 70, height: 70, marginRight: 12 }} />
+              </Box>
             </Box>
 
             {/* Navigation removed from Toolbar */}
             <Box sx={{ flexGrow: 1 }} /> {/* Spacer */}
 
-            <IconButton color="inherit">
-              <NotificationsIcon />
-            </IconButton>
+            <NotificationBell
+              alerts={alerts}
+              loading={loadingAlerts}
+              onBellClick={handleAlertBellClick}
+              anchorEl={alertAnchorEl}
+              open={alertMenuOpen}
+              onMenuClose={handleAlertMenuClose}
+            />
             <IconButton onClick={handleMenuClick} size="small" sx={{ ml: 2 }}>
               <Avatar
                 src={getAvatarSrc()}

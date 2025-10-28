@@ -19,8 +19,9 @@ const deviceIcon = new L.Icon({
 });
 
 interface DeviceLocation {
-  serial_number: string;
-  device_name: string;
+  device_id: number | string;
+  serial_number?: string | null;
+  device_name?: string | null;
   latitude: number;
   longitude: number;
   timestamp: string;
@@ -84,21 +85,24 @@ const LocationPage: React.FC = () => {
     });
 
     socket.on('location_update', (data: DeviceLocation) => {
-      // Basic validation
-      if (data && data.serial_number && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+      // Basic validation: accept either device_id (preferred) or serial_number
+      const id = (data as any).device_id ?? (data as any).serial_number ?? null;
+      if (id && typeof data.latitude === 'number' && typeof data.longitude === 'number') {
         setDevices((prev) => {
           const now = Date.now();
-          const idx = prev.findIndex((d) => d.serial_number === data.serial_number);
+          const idx = prev.findIndex((d) => String(d.device_id) === String(id));
           if (idx !== -1) {
             const updated = [...prev];
-            updated[idx] = { ...updated[idx], ...data, lastSeen: now };
+            updated[idx] = { ...updated[idx], ...data, device_id: (data as any).device_id ?? updated[idx].device_id, lastSeen: now } as DeviceLocationWithLastSeen;
             return updated;
           } else {
-            return [...prev, { ...data, lastSeen: now }];
+            // Ensure device_id is present on new entry
+            const entry = { ...data, device_id: (data as any).device_id ?? (data as any).serial_number, lastSeen: now } as DeviceLocationWithLastSeen;
+            return [...prev, entry];
           }
         });
       } else {
-        console.warn("Received invalid location update:", data);
+        console.warn('Received invalid location update:', data);
       }
     });
 
@@ -132,11 +136,11 @@ const LocationPage: React.FC = () => {
     loadLocations();
   };
 
-  // Show device info modal for a specific device
-  const handleInfoClick = async (serialNumber: string) => {
+  // Show device info modal for a specific device (use device_id)
+  const handleInfoClick = async (deviceId: string | number) => {
     try {
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`/api/dashboard/device/serial/${serialNumber}`,
+      const res = await fetch(`/api/dashboard/device/${deviceId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -146,28 +150,36 @@ const LocationPage: React.FC = () => {
       );
       if (!res.ok) throw new Error(`Failed to fetch device info: ${res.statusText}`);
       const raw = await res.json();
+      // Some backend endpoints return { success: true, data: [...] } or an array;
+      // normalize to a single object payload so mapping below works for both shapes.
+      let payload: any = raw;
+      if (raw && raw.success && Array.isArray(raw.data)) {
+        payload = raw.data[0] ?? null;
+      } else if (Array.isArray(raw) && raw.length > 0) {
+        payload = raw[0];
+      }
 
       // Map backend response to DeviceInfo interface
       const info: DeviceInfo = {
-        latitude: raw.latitude ?? null,
-        longitude: raw.longitude ?? null,
-        timestamp: raw.location_timestamp ?? raw.timestamp ?? null,
-        battery_level: raw.battery_level ?? null,
-        signal_strength: raw.signal_strength ?? null,
-        speed: raw.speed ?? null,
-        altitude: raw.altitude ?? null,
-        accuracy: raw.accuracy ?? null,
+  latitude: payload?.latitude ?? null,
+  longitude: payload?.longitude ?? null,
+        timestamp: payload?.location_timestamp ?? payload?.timestamp ?? null,
+        battery_level: payload?.battery_level ?? null,
+        signal_strength: payload?.signal_strength ?? null,
+        speed: payload?.speed ?? null,
+        altitude: payload?.altitude ?? null,
+        accuracy: payload?.accuracy ?? null,
         isOnline: true, // TODO: Infer online status correctly if possible
-        street_name: raw.street_name ?? null,
-        city_name: raw.city_name ?? null,
-        place_name: raw.place_name ?? null,
-        context_tag: raw.context_tag ?? null,
-        poi_name: raw.poi_name ?? null,
-        poi_type: raw.poi_type ?? null,
-        poi_lat: raw.poi_lat ?? null,
-        poi_lon: raw.poi_lon ?? null,
-        poi_distance_km: raw.poi_distance_km ?? null,
-        poi_distance_m: raw.poi_distance_m ?? null
+        street_name: payload?.street_name ?? null,
+        city_name: payload?.city_name ?? null,
+        place_name: payload?.place_name ?? null,
+        context_tag: payload?.context_tag ?? null,
+        poi_name: payload?.poi_name ?? null,
+        poi_type: payload?.poi_type ?? null,
+        poi_lat: payload?.poi_lat ?? null,
+        poi_lon: payload?.poi_lon ?? null,
+        poi_distance_km: payload?.poi_distance_km ?? null,
+        poi_distance_m: payload?.poi_distance_m ?? null
       };
       setModalInfo(info);
       setModalOpen(true);
@@ -187,8 +199,8 @@ const LocationPage: React.FC = () => {
       if (map && typeof firstDevice.latitude === 'number' && typeof firstDevice.longitude === 'number') {
         map.setView([firstDevice.latitude, firstDevice.longitude], 18, { animate: true });
       }
-      // Show info for the first device
-      await handleInfoClick(firstDevice.serial_number);
+  // Show info for the first device (use device_id)
+  await handleInfoClick(firstDevice.device_id);
     } else {
       // Handle case with no devices - maybe show a message?
       console.log("No devices available to show info for.");
@@ -229,7 +241,7 @@ const LocationPage: React.FC = () => {
           // Only show devices seen in the last 60 seconds
           (typeof d.latitude === 'number' && typeof d.longitude === 'number') && (
             <Marker
-              key={d.serial_number}
+              key={d.device_id}
               position={[d.latitude, d.longitude]}
               icon={deviceIcon}
             >
@@ -237,10 +249,10 @@ const LocationPage: React.FC = () => {
                 {/* Use MUI components inside Popup */}
                 <Stack spacing={0.5} sx={{ minWidth: 180 }}>
                   <Typography variant="subtitle2" fontWeight="600">
-                    Serial: {d.serial_number || '--'}
+                    Serial: {d.serial_number ?? d.device_id ?? '--'}
                   </Typography>
                   <Typography variant="body2">
-                    {d.device_name || d.serial_number}
+                    {d.device_name ?? d.serial_number ?? d.device_id}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(d.timestamp).toLocaleString()}
@@ -252,7 +264,7 @@ const LocationPage: React.FC = () => {
                     variant="contained"
                     size="small"
                     startIcon={<InfoIcon />}
-                    onClick={() => handleInfoClick(d.serial_number)}
+                    onClick={() => handleInfoClick(d.device_id)}
                     sx={{ mt: 1, alignSelf: 'flex-start' }}
                   >
                     Device Info
