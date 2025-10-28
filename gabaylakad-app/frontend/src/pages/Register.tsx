@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Import the "design" component
-import RegisterForm, { RegisterFormProps } from '../components/RegisterForm'; // Adjust path as needed
+import RegisterForm, { RegisterFormProps } from '../components/RegisterForm'; 
 
-// This is your page component
 const Register: React.FC = () => {
-    // --- All State and Logic Lives Here ---
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -26,6 +23,73 @@ const Register: React.FC = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const validateEmailInline = async (val: string) => {
+        setEmail(val);
+        setErrors((prev) => ({ ...prev, email: '' }));
+        if (!isEmailValid(val)) {
+            setErrors((prev) => ({ ...prev, email: 'Invalid email format' }));
+            return;
+        }
+        try {
+            const res = await fetch(`${apiUrl}/api/auth/check-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: val })
+            });
+            const data = await res.json();
+            if (!data.valid) {
+                setErrors((prev) => ({ ...prev, email: data.message }));
+            }
+        } catch (err) {
+            setErrors((prev) => ({ ...prev, email: 'Error checking email' }));
+        }
+    };
+
+    const validatePhoneInline = async (val: string) => {
+        setPhoneNumber(val);
+        setErrors((prev) => ({ ...prev, phoneNumber: '' }));
+        if (!isPhoneValid(val)) {
+            setErrors((prev) => ({ ...prev, phoneNumber: 'Must be 11 digits' }));
+            return;
+        }
+        try {
+            const res = await fetch(`${apiUrl}/api/auth/check-phone`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone_number: val })
+            });
+            const data = await res.json();
+            if (!data.valid) {
+                setErrors((prev) => ({ ...prev, phoneNumber: data.message }));
+            }
+        } catch (err) {
+            setErrors((prev) => ({ ...prev, phoneNumber: 'Error checking phone number' }));
+        }
+    };
+
+    const validateSerialInline = async (val: string) => {
+        setSerialNumber(val);
+        setErrors((prev) => ({ ...prev, serialNumber: '' }));
+        if (!val) {
+            setErrors((prev) => ({ ...prev, serialNumber: 'Device serial number is required' }));
+            return;
+        }
+        try {
+            const res = await fetch(`${apiUrl}/api/auth/check-serial`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serial_number: val })
+            });
+            const data = await res.json();
+            if (!data.valid) {
+                setErrors((prev) => ({ ...prev, serialNumber: data.message }));
+            }
+        } catch (err) {
+            setErrors((prev) => ({ ...prev, serialNumber: 'Error checking serial number' }));
+        }
+    };
     const navigate = useNavigate();
 
     // --- Validation Helpers ---
@@ -43,10 +107,6 @@ const Register: React.FC = () => {
         event.preventDefault();
     };
     const handleGoToLogin = () => navigate('/');
-    const handleGoToTerms = () => navigate('/terms');
-    const handleGoToPrivacy = () => navigate('/privacy');
-
-    // --- Validation Function ---
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {};
         if (!firstName) newErrors.firstName = 'First name is required';
@@ -144,14 +204,17 @@ const Register: React.FC = () => {
         serialNumber, password, confirmPassword, userFullName, userAge,
         userPhoneNumber, impairmentLevel, terms, showPassword,
         showConfirmPassword, loading, errorMsg, successMsg, errors,
-        handleSubmit, handleGoToLogin, handleGoToTerms, handleGoToPrivacy,
+    handleSubmit, handleGoToLogin,
         handleClickShowPassword, handleClickShowConfirmPassword, handleMouseDownPassword,
-        setFirstName, setLastName, setPhoneNumber, setEmail, setRelationship,
-        setOtherRelationship, setSerialNumber, setPassword, setConfirmPassword,
-        setUserFullName, setUserAge, setUserPhoneNumber, setImpairmentLevel, setTerms
+    setFirstName, setLastName,
+    setPhoneNumber: validatePhoneInline,
+    setEmail: validateEmailInline,
+    setRelationship, setOtherRelationship,
+    setSerialNumber: validateSerialInline,
+    setPassword, setConfirmPassword,
+    setUserFullName, setUserAge, setUserPhoneNumber, setImpairmentLevel, setTerms
     };
 
-    // Render the "dumb" form component and pass it all the props
     return <RegisterForm {...formProps} />;
 };
 

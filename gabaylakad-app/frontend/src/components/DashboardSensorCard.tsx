@@ -11,6 +11,11 @@ import {
   ListItemIcon,
 } from '@mui/material';
 import SensorsIcon from '@mui/icons-material/Sensors';
+import { orange, purple, teal } from '@mui/material/colors';
+import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
+import PhonelinkRingIcon from '@mui/icons-material/PhonelinkRing';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 
 const fetchSensorData = async () => {
   const res = await fetch('/api/dashboard/sensor', {
@@ -53,25 +58,30 @@ const DashboardSensorCard: React.FC = () => {
     let primary = '';
     let secondary = '';
     let icon = null;
+    let borderColor: string = teal[700]; // Default teal
     switch (log.event_type) {
       case 'obstacle':
         primary = `Obstacle detected (${log.direction ?? '?'})`;
         secondary = `Distance: ${log.distance ?? '?'} cm`;
-        icon = <SensorsIcon color="secondary" />;
+        icon = <SettingsInputComponentIcon sx={{ color: orange[700] }} />;
+        borderColor = orange[700];
         break;
       case 'button_press':
         primary = `Button Pressed: ${log.button ?? '?'}`;
-        icon = <SensorsIcon color="secondary" />;
+        icon = <TouchAppIcon sx={{ color: purple[700] }} />;
+        borderColor = purple[700];
         break;
       case 'vibration':
         primary = `Vibration`;
         secondary = `Pattern: ${log.pattern ?? '?'} | Duration: ${log.duration_ms ?? '?'} ms`;
-        icon = <SensorsIcon color="secondary" />;
+        icon = <PhonelinkRingIcon sx={{ color: '#757575' }} />; // gray
+        borderColor = '#757575';
         break;
       case 'gsm_status':
         primary = `GSM Status`;
         secondary = `Signal: ${log.signal_strength ?? '?'} | Connected: ${log.connected ? 'Yes' : 'No'}`;
-        icon = <SensorsIcon color="secondary" />;
+        icon = <SignalCellularAltIcon sx={{ color: '#009688' }} />;
+        borderColor = '#009688';
         break;
       default:
         // Optionally skip unknown events
@@ -85,8 +95,7 @@ const DashboardSensorCard: React.FC = () => {
           borderRadius: 2,
           mb: 1.5,
           boxShadow: 1,
-          borderLeft: '4px solid',
-          borderColor: 'secondary.main',
+          borderLeft: `4px solid ${borderColor}`,
         }}
       >
         <ListItemIcon sx={{ minWidth: 40 }}>{icon}</ListItemIcon>

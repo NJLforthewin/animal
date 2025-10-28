@@ -12,6 +12,7 @@ import reflectorRoutes from './routes/reflectorRoutes';
 import locationRoutes from './routes/locationRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import sensorRoutes from './routes/sensorRoutes';
+import legalRoutes from './routes/legalRoutes';
 const app = express();
 const allowedOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
 app.use(cors({ origin: allowedOrigin, credentials: true }));
@@ -60,6 +61,7 @@ app.use('/api/reflectors', reflectorRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/dashboard/sensor', sensorRoutes);
+app.use('/api/legal', legalRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'API is running' });

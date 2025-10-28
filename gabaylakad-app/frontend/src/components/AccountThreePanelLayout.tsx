@@ -53,7 +53,7 @@ export default function AccountThreePanelLayout({ user, setUser }: { user: any, 
   // Save handler
   const handleSave = async () => {
     setLoading(true);
-    // ... (rest of your handleSave logic is unchanged) ...
+    // Add serial_number to payload to preserve device info
     const payload = {
       first_name: editFields.first_name || profile.first_name || '',
       last_name: editFields.last_name || profile.last_name || '',
@@ -65,6 +65,7 @@ export default function AccountThreePanelLayout({ user, setUser }: { user: any, 
       blind_age: profile.blind_age || '',
       impairment_level: profile.impairment_level || '',
       device_id: profile.device_id || '',
+      serial_number: profile.serial_number || '',
       avatar: avatarPreview !== null ? avatarPreview : editFields.avatar || profile.avatar || '',
     };
     await fetch('/api/profile', {

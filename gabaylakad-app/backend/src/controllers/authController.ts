@@ -1,3 +1,4 @@
+
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -5,6 +6,59 @@ import crypto from 'crypto';
 import { query } from '../utils/db';
 import { sendResetEmail } from '../utils/email';
 import { blacklistToken, setSession, getSession } from '../utils/redisHelpers';
+
+// Inline validation endpoints
+export const checkEmail = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ valid: false, message: 'Email is required.' });
+    try {
+        const result = await query('SELECT user_id FROM user WHERE email = ?', [email]);
+        const exists = Array.isArray(result.rows) && result.rows.length > 0;
+        if (exists) {
+            return res.json({ valid: false, message: 'Email is already registered.' });
+        }
+        return res.json({ valid: true, message: 'Email is available.' });
+    } catch (error) {
+        return res.status(500).json({ valid: false, message: 'Database error.', error });
+    }
+};
+
+export const checkPhone = async (req: Request, res: Response) => {
+    const { phone_number } = req.body;
+    if (!phone_number) return res.status(400).json({ valid: false, message: 'Phone number is required.' });
+    try {
+        const result = await query('SELECT user_id FROM user WHERE phone_number = ?', [phone_number]);
+        const exists = Array.isArray(result.rows) && result.rows.length > 0;
+        if (exists) {
+            return res.json({ valid: false, message: 'Phone number is already registered.' });
+        }
+        return res.json({ valid: true, message: 'Phone number is available.' });
+    } catch (error) {
+        return res.status(500).json({ valid: false, message: 'Database error.', error });
+    }
+};
+
+export const checkSerial = async (req: Request, res: Response) => {
+    const { serial_number } = req.body;
+    if (!serial_number) return res.status(400).json({ valid: false, message: 'Serial number is required.' });
+    try {
+        const deviceRes = await query('SELECT device_id FROM device WHERE serial_number = ?', [serial_number]);
+        const deviceRows = Array.isArray(deviceRes.rows) ? deviceRes.rows : [];
+        if (deviceRows.length > 0) {
+            // Explicitly cast to RowDataPacket for type safety
+            const deviceId = (deviceRows[0] as any).device_id;
+            const userRes = await query('SELECT user_id FROM user WHERE device_id = ?', [deviceId]);
+            const userRows = Array.isArray(userRes.rows) ? userRes.rows : [];
+            if (userRows.length > 0) {
+                return res.json({ valid: false, message: 'Device serial number is already assigned.' });
+            }
+            return res.json({ valid: true, message: 'Device serial number is available.' });
+        }
+        return res.json({ valid: true, message: 'Device serial number is available.' });
+    } catch (error) {
+        return res.status(500).json({ valid: false, message: 'Database error.', error });
+    }
+};
 
 // Change password endpoint (for logged-in users)
 export const changePassword = async (req: Request, res: Response) => {
@@ -203,7 +257,7 @@ export const register = async (req: Request, res: Response) => {
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const hashedPassword = await bcrypt.hash(password, 10);
         await query(
-            'INSERT INTO user (name, first_name, last_name, email, phone_number, impairment_level, device_id, password, is_verified, verification_code, relationship, blind_full_name, blind_age, blind_phone_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO user (name, first_name, last_name, email, phone_number, impairment_level, device_id, password, is_verified, verification_code, relationship, blind_full_name, blind_age, blind_phone_number, terms_accepted_at, privacy_accepted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 name ?? null,
                 firstName ?? null,
@@ -218,7 +272,9 @@ export const register = async (req: Request, res: Response) => {
                 relationship ?? null,
                 blind_full_name ?? null,
                 blind_age ?? null,
-                blind_phone_number ?? null
+                blind_phone_number ?? null,
+                new Date(), // terms_accepted_at
+                new Date()  // privacy_accepted_at
             ]
         );
         const previewUrl = await sendResetEmail(email, verificationCode);

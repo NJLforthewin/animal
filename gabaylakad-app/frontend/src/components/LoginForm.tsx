@@ -29,6 +29,8 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import GoogleIcon from '@mui/icons-material/Google';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+// Use public path for logo image
+
 import EmailIcon from '@mui/icons-material/Email';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // <-- Added for list
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'; // <-- Added for security box
@@ -57,7 +59,7 @@ export interface LoginFormProps {
     setPassword: (val: string) => void;
     setRememberMe: (val: boolean) => void;
 }
-
+const logo = process.env.PUBLIC_URL + '/logo192.png';
 const LoginForm: React.FC<LoginFormProps> = (props) => {
     // Destructure all props for easy use
     const {
@@ -135,14 +137,9 @@ const LoginForm: React.FC<LoginFormProps> = (props) => {
                             p: { xs: 3, sm: 5 }, 
                             textAlign: 'center' 
                         }}>
-                                <Avatar sx={{ mx: 'auto', mb: 2, bgcolor: 'primary.main', width: 56, height: 56 }}>
-                                    <LockOutlinedIcon />
+                                <Avatar sx={{ mx: 'auto', mb: 2, bgcolor: 'transparent', width: 120, height: 120 }}>
+                                    <img src={logo} alt="Logo" style={{ width: 120, height: 120 }} />
                                 </Avatar>
-                                
-                                <Typography component="h1" variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-                                    Sign in
-                                </Typography>
-
                                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                                     <Stack spacing={2.5}>
                                         {errorMsg && (

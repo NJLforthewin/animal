@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react'; // Added useState
 import {
     Container,
     Paper,
@@ -20,6 +20,7 @@ import {
     Link,
     CircularProgress,
     FormHelperText
+    // Dialog related imports removed
 } from '@mui/material';
 
 // Import MUI Icons
@@ -27,6 +28,14 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import BadgeIcon from '@mui/icons-material/Badge';
+import LockIcon from '@mui/icons-material/Lock';
+
+// Import the new LegalModals component
+import LegalModals from './LegalModals'; // Adjust path if needed
 
 // These are needed by the form, so we pass them in
 const impairmentOptions = [
@@ -82,8 +91,7 @@ export interface RegisterFormProps {
     // Event Handlers
     handleSubmit: (e: React.FormEvent) => void;
     handleGoToLogin: () => void;
-    handleGoToTerms: () => void;
-    handleGoToPrivacy: () => void;
+    // Removed handleGoToTerms, handleGoToPrivacy - Parent will handle modal opening
     handleClickShowPassword: () => void;
     handleClickShowConfirmPassword: () => void;
     handleMouseDownPassword: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -106,28 +114,35 @@ export interface RegisterFormProps {
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = (props) => {
+    // State to control modal visibility
+    const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+    const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+
     // Destructure all props for easy use in the JSX
     const {
         firstName, lastName, phoneNumber, email, relationship, otherRelationship,
         serialNumber, password, confirmPassword, userFullName, userAge,
         userPhoneNumber, impairmentLevel, terms, showPassword,
         showConfirmPassword, loading, errorMsg, successMsg, errors,
-        handleSubmit, handleGoToLogin, handleGoToTerms, handleGoToPrivacy,
+        handleSubmit, handleGoToLogin, // handleGoToTerms, handleGoToPrivacy removed
         handleClickShowPassword, handleClickShowConfirmPassword, handleMouseDownPassword,
         setFirstName, setLastName, setPhoneNumber, setEmail, setRelationship,
         setOtherRelationship, setSerialNumber, setPassword, setConfirmPassword,
         setUserFullName, setUserAge, setUserPhoneNumber, setImpairmentLevel, setTerms
     } = props;
 
+    // Handlers to open the modals
+    const openTerms = () => setIsTermsModalOpen(true);
+    const openPrivacy = () => setIsPrivacyModalOpen(true);
+
     return (
-        // Adjusted Box: removed minHeight, alignItems, justifyContent
         <Box sx={{ display: 'flex', py: 1, background: 'linear-gradient(to bottom right, #e3f2fd, #e8eaf6)' }}>
-            <Container maxWidth="lg"> {/* Changed from lg to md */}
+            <Container maxWidth="lg">
                 <Paper elevation={6} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 4 }}>
                     <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ fontWeight: 700, mb: 4, color: 'primary.main' }}>
                         Create Your Account
                     </Typography>
-                    
+
                     <Box component="form" onSubmit={handleSubmit} noValidate>
                         <Stack spacing={4}>
                             {/* Row 1: Caregiver & Person */}
@@ -135,18 +150,18 @@ const RegisterForm: React.FC<RegisterFormProps> = (props) => {
                                 <Box sx={{ width: { xs: '100%', md: '50%' } }}>
                                     <CardSection title="Your Information (Caregiver)">
                                         <Stack spacing={2.5}>
-                                            <TextField id="fName" label="First Name" variant="outlined" required fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} error={!!errors.firstName} helperText={errors.firstName} />
-                                            <TextField id="lName" label="Last Name" variant="outlined" required fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} error={!!errors.lastName} helperText={errors.lastName} />
-                                            <TextField id="pNumber" label="Phone Number" variant="outlined" required fullWidth type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="11 digits (e.g., 09xxxxxxxxx)" inputProps={{ maxLength: 11 }} error={!!errors.phoneNumber} helperText={errors.phoneNumber || "Required"} />
-                                            <TextField id="email" label="Email" variant="outlined" required fullWidth type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={!!errors.email} helperText={errors.email || "Required"} />
+                                            <TextField id="fName" label="First Name" variant="outlined" required fullWidth value={firstName} onChange={(e) => setFirstName(e.target.value)} error={!!errors.firstName} helperText={errors.firstName} InputProps={{ startAdornment: (<InputAdornment position="start"><PersonOutlineIcon color="action" /></InputAdornment>), }} />
+                                            <TextField id="lName" label="Last Name" variant="outlined" required fullWidth value={lastName} onChange={(e) => setLastName(e.target.value)} error={!!errors.lastName} helperText={errors.lastName} InputProps={{ startAdornment: (<InputAdornment position="start"><PersonOutlineIcon color="action" /></InputAdornment>), }}/>
+                                            <TextField id="pNumber" label="Phone Number" variant="outlined" required fullWidth type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="11 digits (e.g., 09xxxxxxxxx)" inputProps={{ maxLength: 11 }} error={!!errors.phoneNumber} helperText={errors.phoneNumber || "Required"} InputProps={{ startAdornment: (<InputAdornment position="start"><PhoneIcon color="action" /></InputAdornment>), }}/>
+                                            <TextField id="email" label="Email" variant="outlined" required fullWidth type="email" value={email} onChange={(e) => setEmail(e.target.value)} error={!!errors.email} helperText={errors.email || "Required"} InputProps={{ startAdornment: (<InputAdornment position="start"><EmailIcon color="action" /></InputAdornment>), }}/>
                                         </Stack>
                                     </CardSection>
                                 </Box>
                                 <Box sx={{ width: { xs: '100%', md: '50%' } }}>
                                     <CardSection title="Person You'll Monitor">
                                         <Stack spacing={2.5}>
-                                            <TextField id="userFullName" label="Full Name" variant="outlined" required fullWidth value={userFullName} onChange={(e) => setUserFullName(e.target.value)} error={!!errors.userFullName} helperText={errors.userFullName} />
-                                            <TextField id="userPhoneNumber" label="Phone Number (Optional)" variant="outlined" fullWidth type="tel" value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="11 digits (if applicable)" inputProps={{ maxLength: 11 }} helperText={errors.userPhoneNumber || "Leave blank if none"} error={!!errors.userPhoneNumber} />
+                                            <TextField id="userFullName" label="Full Name" variant="outlined" required fullWidth value={userFullName} onChange={(e) => setUserFullName(e.target.value)} error={!!errors.userFullName} helperText={errors.userFullName} InputProps={{ startAdornment: (<InputAdornment position="start"><PersonOutlineIcon color="action" /></InputAdornment>), }}/>
+                                            <TextField id="userPhoneNumber" label="Phone Number (Optional)" variant="outlined" fullWidth type="tel" value={userPhoneNumber} onChange={(e) => setUserPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 11))} placeholder="11 digits (if applicable)" inputProps={{ maxLength: 11 }} helperText={errors.userPhoneNumber || "Leave blank if none"} error={!!errors.userPhoneNumber} InputProps={{ startAdornment: (<InputAdornment position="start"><PhoneIcon color="action" /></InputAdornment>), }}/>
                                             <TextField id="userAge" label="Age" variant="outlined" required fullWidth type="number" value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="e.g., 65" inputProps={{ min: 1, max: 120 }} error={!!errors.userAge} helperText={errors.userAge || "Age 1-120"} />
                                             <FormControl fullWidth required variant="outlined" error={!!errors.impairmentLevel}>
                                                 <InputLabel id="impairmentLevel-label">Impairment Level</InputLabel>
@@ -177,15 +192,15 @@ const RegisterForm: React.FC<RegisterFormProps> = (props) => {
                                             {relationship === 'Other' && (
                                                 <TextField id="otherRelationship" label="Specify Relationship" variant="outlined" fullWidth value={otherRelationship} onChange={(e) => setOtherRelationship(e.target.value)} placeholder="Please specify" required error={!!errors.otherRelationship} helperText={errors.otherRelationship} />
                                             )}
-                                            <TextField id="serialNumber" label="Device Serial Number" variant="outlined" required fullWidth value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} placeholder="Found on the tracking device" helperText={errors.serialNumber || "Unique serial number on the device"} error={!!errors.serialNumber} />
+                                            <TextField id="serialNumber" label="Device Serial Number" variant="outlined" required fullWidth value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} placeholder="Found on the tracking device" helperText={errors.serialNumber || "Unique serial number on the device"} error={!!errors.serialNumber} InputProps={{ startAdornment: (<InputAdornment position="start"><BadgeIcon color="action" /></InputAdornment>), }}/>
                                         </Stack>
                                     </CardSection>
                                 </Box>
                                 <Box sx={{ width: { xs: '100%', md: '50%' } }}>
                                     <CardSection title="Security">
                                         <Stack spacing={2.5}>
-                                            <TextField id="password" label="Create Password" variant="outlined" required fullWidth type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 8 characters" error={!!errors.password} helperText={errors.password || "Min. 8 characters with letters & numbers"} InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>), }} />
-                                            <TextField id="confirmPassword" label="Confirm Password" variant="outlined" required fullWidth type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" error={!!errors.confirmPassword} helperText={errors.confirmPassword || ""} InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowConfirmPassword} onMouseDown={handleMouseDownPassword} edge="end">{showConfirmPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>), }} />
+                                            <TextField id="password" label="Create Password" variant="outlined" required fullWidth type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Minimum 8 characters" error={!!errors.password} helperText={errors.password || "Min. 8 characters"} InputProps={{ startAdornment: (<InputAdornment position="start"><LockIcon color="action" /></InputAdornment>), endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end">{showPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>), }} />
+                                            <TextField id="confirmPassword" label="Confirm Password" variant="outlined" required fullWidth type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter password" error={!!errors.confirmPassword} helperText={errors.confirmPassword || ""} InputProps={{ startAdornment: (<InputAdornment position="start"><LockIcon color="action" /></InputAdornment>), endAdornment: (<InputAdornment position="end"><IconButton aria-label="toggle confirm password visibility" onClick={handleClickShowConfirmPassword} onMouseDown={handleMouseDownPassword} edge="end">{showConfirmPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>), }} />
                                         </Stack>
                                     </CardSection>
                                 </Box>
@@ -197,8 +212,17 @@ const RegisterForm: React.FC<RegisterFormProps> = (props) => {
                             <FormControl error={!!errors.terms}>
                                 <FormControlLabel
                                     control={<Checkbox id="terms" checked={terms} onChange={(e) => setTerms(e.target.checked)} required color="primary" />}
-                                    label={<Typography variant="body2"> I agree to the{' '} <Link component="button" type="button" variant="body2" onClick={handleGoToTerms}> Terms and Conditions </Link>{' '} and{' '} <Link component="button" type="button" variant="body2" onClick={handleGoToPrivacy}> Privacy Policy </Link> </Typography>}
-                                    sx={{ alignItems: 'center' }}
+                                    label={
+                                        <Typography variant="body2">
+                                            I agree to the{' '}
+                                            {/* Updated Link to use the modal handler */}
+                                            <Link component="button" type="button" variant="body2" onClick={openTerms}> Terms and Conditions </Link>
+                                            {' '}and{' '}
+                                            {/* Updated Link to use the modal handler */}
+                                            <Link component="button" type="button" variant="body2" onClick={openPrivacy}> Privacy Policy </Link>
+                                        </Typography>
+                                    }
+                                    sx={{ alignItems: 'flex-start' }} // Align checkbox with first line of text
                                 />
                                 {errors.terms && <FormHelperText sx={{ textAlign: 'center' }}>{errors.terms}</FormHelperText>}
                             </FormControl>
@@ -207,7 +231,7 @@ const RegisterForm: React.FC<RegisterFormProps> = (props) => {
                             {successMsg && ( <Alert severity="success" icon={<CheckCircleIcon fontSize="inherit" />} sx={{ width: '100%', maxWidth: 'sm' }}> {successMsg} </Alert> )}
 
                             <Button type="submit" variant="contained" color="primary" disabled={loading || !terms} size="large" sx={{ width: '100%', maxWidth: 'sm', py: 1.5, textTransform: 'none', fontSize: '1.1rem', fontWeight: 600 }} startIcon={loading ? <CircularProgress size={24} color="inherit" /> : null}>
-                                {loading ? 'Creating Account...' : 'Create Caregiver Account'}
+                                {loading ? 'Creating Account...' : 'Create Account'}
                             </Button>
 
                             <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
@@ -218,6 +242,16 @@ const RegisterForm: React.FC<RegisterFormProps> = (props) => {
                             </Typography>
                         </Stack>
                     </Box>
+
+                    {/* Render the LegalModals component */}
+                    <LegalModals
+                        openTerms={isTermsModalOpen}
+                        openPrivacy={isPrivacyModalOpen}
+                        onCloseTerms={() => setIsTermsModalOpen(false)}
+                        onClosePrivacy={() => setIsPrivacyModalOpen(false)}
+                        // apiUrl can be passed if needed, otherwise it uses default
+                    />
+
                 </Paper>
             </Container>
         </Box>

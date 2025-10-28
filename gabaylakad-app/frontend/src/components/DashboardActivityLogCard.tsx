@@ -19,6 +19,10 @@ import { Maximize2, X } from 'lucide-react';
 
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import NotesIcon from '@mui/icons-material/Notes';
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import ErrorIcon from '@mui/icons-material/Error';
 
 // Assuming LoadingSpinner is a custom component
 // import LoadingSpinner from './LoadingSpinner';
@@ -70,6 +74,23 @@ const DashboardActivityLogCard: React.FC = () => {
     const date = log.timestamp ?? log.date ?? '';
     const steps = log.payload?.steps;
 
+    // Choose icon and border color based on action/event type
+    let icon = <NotesIcon color="primary" />;
+    let borderColor = 'primary.main';
+    if (/walk|walking/i.test(action)) {
+      icon = <DirectionsWalkIcon color="success" />;
+      borderColor = 'success.main';
+    } else if (/run|running/i.test(action)) {
+      icon = <DirectionsRunIcon color="success" />;
+      borderColor = 'success.main';
+    } else if (/idle|rest|sleep/i.test(action)) {
+      icon = <PauseCircleOutlineIcon color="info" />;
+      borderColor = 'info.main';
+    } else if (/error|fail|problem/i.test(action)) {
+      icon = <ErrorIcon color="error" />;
+      borderColor = 'error.main';
+    }
+
     return (
       <ListItem 
         key={idx} 
@@ -79,11 +100,11 @@ const DashboardActivityLogCard: React.FC = () => {
           mb: 1.5, 
           boxShadow: 1,
           borderLeft: '4px solid',
-          borderColor: 'primary.main',
+          borderColor,
         }}
       >
         <ListItemIcon sx={{ minWidth: 40 }}>
-          <NotesIcon color="primary" />
+          {icon}
         </ListItemIcon>
         <ListItemText
           primary={

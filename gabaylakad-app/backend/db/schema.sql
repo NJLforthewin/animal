@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS `user` (
   reset_token varchar(255) DEFAULT NULL,
   reset_token_expires datetime DEFAULT NULL,
   avatar varchar(255) DEFAULT NULL,
+  terms_accepted_at DATETIME DEFAULT NULL,
+  privacy_accepted_at DATETIME DEFAULT NULL,
   PRIMARY KEY (user_id),
   UNIQUE KEY email (email)
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

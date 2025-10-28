@@ -29,6 +29,7 @@ interface ProfilePanelProps {
     last_name?: string;
     phone?: string;
     avatar?: string;
+    serial_number?: string;
   };
   editMode: boolean;
   avatarEditMode: boolean;
@@ -171,14 +172,23 @@ const ProfilePanel: React.FC<ProfilePanelProps> = ({
                   </Stack>
                 </Stack>
               ) : (
-                // View Mode Info
-                <Stack alignItems="center" spacing={0.5}>
+                // Improved View Mode Info
+                <Stack alignItems="center" spacing={1}>
                   <Typography variant="h5" fontWeight="600">
-                    {editFields.first_name || ''} {editFields.last_name || ''}
+                    {(editFields.first_name || 'N/A') + ' ' + (editFields.last_name || 'N/A')}
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
-                    {editFields.email}
+                    {editFields.email || 'N/A'}
                   </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Phone: {editFields.phone || 'N/A'}
+                  </Typography>
+                  {/* Example: Show device serial number if available */}
+                  {editFields.serial_number !== undefined && (
+                    <Typography variant="body2" color="text.secondary">
+                      Device Serial: {editFields.serial_number || 'N/A'}
+                    </Typography>
+                  )}
                 </Stack>
               )}
 

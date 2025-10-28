@@ -13,6 +13,7 @@ npx react-native run-android
 
 cd gabaylakad-app/backend/db
 USE gabalakad_database; gabay_database
+
 \connect root@localhost
 
 

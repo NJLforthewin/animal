@@ -83,11 +83,6 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const userMenuOpen = Boolean(anchorEl);
   const navigate = useNavigate();
-
-  // ... (handler functions)
-
-  // ... (getAvatarSrc function)
-
   return (
     <AppBar
       position="sticky"
@@ -106,7 +101,7 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
           // Mobile Header
           <>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/logo192.png" alt="Logo" style={{ width: 32, height: 32, marginRight: 8 }} />
+              <img src="/logo192.png" alt="Logo" style={{ width: 70, height: 70, marginRight: 8 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }} />
             <IconButton color="inherit">
@@ -124,10 +119,7 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
           // Desktop Header
           <>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <img src="/logo192.png" alt="Logo" style={{ width: 32, height: 32, marginRight: 12 }} />
-              <Typography variant="h6" component="div" noWrap sx={{ fontWeight: 600 }}>
-                GabayLakad
-              </Typography>
+              <img src="/logo192.png" alt="Logo" style={{ width: 70, height: 70, marginRight: 12 }} />
             </Box>
 
             {/* Navigation removed from Toolbar */}
@@ -166,31 +158,36 @@ const Header: React.FC<AppBarProps> = ({ sx, ...otherProps }) => {
           }}
           // --- End Refined Positioning ---
           PaperProps={{
+              border: '1px solid',
+              borderColor: 'black',
             elevation: 3,
             sx: {
-              overflow: 'visible', // Needed for the arrow ::before
-              mt: 1.5, // Margin top from anchor
+              overflow: 'visible',
+              mt: 1.5, 
               width: 260,
               borderRadius: 2,
-              boxShadow: 'none', // Remove box-shadow
-              border: 'none', // Remove border
+              boxShadow: 'none', 
+              border: 'none',
+              bgcolor: 'grey.100',
+              borderColor: 'grey.300',
               '& .MuiAvatar-root': {
                 width: 36,
                 height: 36,
                 ml: -0.5,
                 mr: 1.5,
               },
-              // Add the arrow using ::before pseudo-element
               '&::before': {
                 content: '""',
                 display: 'block',
                 position: 'absolute',
                 top: 0,
-                // Adjusted position slightly more left to account for potential body padding
-                right: '18px', // Adjusted from 14px 
+                right: '18px', 
                 width: 10,
                 height: 10,
-                bgcolor: 'background.paper',
+                bgcolor: 'grey.100',
+                borderLeft: '1px solid',
+                borderTop: '1px solid',
+                borderColor: 'grey.300',
                 transform: 'translateY(-50%) rotate(45deg)',
                 zIndex: 0,
               },
